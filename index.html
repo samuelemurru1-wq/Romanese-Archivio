@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Romanese — Archivio</title>
+  <style>
+    @font-face { font-family: 'NHG'; font-weight: 400; font-style: normal; src: local('NeueHaasDisplay-Roman'), local('Neue Haas Grotesk Display Pro'); }
+    @font-face { font-family: 'NHG'; font-weight: 500; font-style: normal; src: local('NeueHaasDisplay-Medium'), local('Neue Haas Grotesk Display Pro Medium'); }
+    @font-face { font-family: 'NHG'; font-weight: 700; font-style: normal; src: local('NeueHaasDisplay-Bold'), local('Neue Haas Grotesk Display Pro Bold'); }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #f5f5f3; }
+    body { font-family: 'NHG','Helvetica Neue',Arial,sans-serif; -webkit-font-smoothing: antialiased; color: #111; }
+
+    canvas { display: block; position: fixed; inset: 0; cursor: grab; }
+    canvas.drag { cursor: grabbing; }
+    canvas.ptr  { cursor: pointer; }
+
+    /* ── HUD BAR ───────────────────────────────────────────── */
+    #hud {
+      position: fixed; top: 0; left: 0; right: 0; height: 54px;
+      background: none; border-bottom: none;
+      pointer-events: none; z-index: 50;
+      mix-blend-mode: difference;
+    }
+
+    /* identity — sinistra */
+    .tl {
+      position: absolute; left: 30px; top: 0; bottom: 0;
+      display: flex; flex-direction: column; justify-content: center; gap: 5px;
+      pointer-events: auto;
+    }
+    .logo-img {
+      height: 24px; width: auto; display: block;
+      filter: invert(1);
+    }
+    .meta {
+      font-size: 8px; font-weight: 400;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: rgba(255,255,255,0.55); line-height: 1;
+    }
+
+    /* nav — destra */
+    .tr {
+      position: absolute; right: 0; top: 0; bottom: 0;
+      display: flex; align-items: center;
+      padding-right: 22px;
+      pointer-events: auto;
+    }
+    .hb {
+      font-family: inherit; font-size: 9px; font-weight: 400;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: rgba(255,255,255,0.45); background: none; border: none;
+      padding: 0 11px; height: 54px;
+      display: flex; align-items: center;
+      cursor: pointer; transition: color 0.12s;
+      white-space: nowrap; user-select: none;
+    }
+    .hb:hover  { color: #fff; }
+    .hb.active { color: #fff; font-weight: 600; }
+
+    /* separatori verticali tra gruppi */
+    .tr-sep {
+      width: 1px; height: 14px;
+      background: rgba(255,255,255,0.25);
+      flex-shrink: 0; margin: 0 4px;
+    }
+
+    /* zoom: − 10% + */
+    .zt {
+      font-size: 8.5px; color: rgba(255,255,255,0.45);
+      letter-spacing: 0.04em; min-width: 34px;
+      text-align: center; user-select: none;
+    }
+
+    /* ── PROGRESS ───────────────────────────────────────────── */
+    #prog { position: fixed; bottom: 0; left: 0; width: 0; height: 1px; background: #888; z-index: 60; transition: width .1s; opacity: 0.5; }
+
+    /* ── TOOLTIP ────────────────────────────────────────────── */
+    #tip {
+      position: fixed; display: none; pointer-events: none; z-index: 60;
+      font-size: 9px; letter-spacing: 0.07em;
+      color: #111; background: rgba(245,245,243,0.97);
+      padding: 5px 11px; white-space: nowrap;
+      max-width: 280px; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* ── LIGHTBOX ───────────────────────────────────────────── */
+    #lb { display: none; position: fixed; inset: 0; z-index: 200; background: #0f0f0e; flex-direction: column; }
+    #lb.open { display: flex; }
+    .lb-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 54px; padding: 0 30px; flex-shrink: 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .lb-n  { font-size: 8px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.22); }
+    .lb-x  { font-family: inherit; font-size: 8px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255,255,255,0.28); background: none; border: none; cursor: pointer; transition: color .12s; padding: 0; }
+    .lb-x:hover { color: rgba(255,255,255,0.85); }
+    .lb-mid { flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 80px; min-height: 0; position: relative; }
+    .lb-mid img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+    .lb-arr { position: absolute; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.18); background: none; border: none; cursor: pointer; padding: 20px 28px; font-size: 11px; transition: color .12s; user-select: none; }
+    .lb-arr:hover { color: rgba(255,255,255,0.65); }
+    #lp { left: 0; } #ln { right: 0; }
+    .lb-bot { flex-shrink: 0; display: flex; align-items: flex-end; justify-content: space-between; padding: 18px 30px 26px; border-top: 1px solid rgba(255,255,255,0.05); gap: 40px; }
+    #lt { font-size: 12px; color: rgba(255,255,255,0.72); max-width: 500px; line-height: 1.55; }
+    .lb-r { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+    #lm { font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.22); text-align: right; line-height: 2.1; white-space: pre; }
+    #ls { width: 20px; height: 20px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+
+    /* ── OVERLAY ────────────────────────────────────────────── */
+    #ov { position: fixed; inset: 0; background: #f5f5f3; display: flex; align-items: center; justify-content: center; z-index: 300; font-size: 8px; letter-spacing: 0.24em; text-transform: uppercase; color: #bbb; transition: opacity .3s; }
+
+    /* ── LISTA VIEW ─────────────────────────────────────────── */
+    #lv { display: none; position: fixed; top: 64px; left: 0; right: 0; bottom: 0; z-index: 45; background: #f5f5f3; }
+    #lv.open { display: flex; }
+    #lv-list { width: 320px; overflow-y: auto; flex-shrink: 0; border-right: 1px solid rgba(0,0,0,0.07); }
+    .lvr { display: flex; align-items: baseline; gap: 14px; padding: 9px 22px; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.04); transition: background .06s; user-select: none; }
+    .lvr:hover, .lvr.pin { background: rgba(0,0,0,0.03); }
+    .lvy { font-size: 8px; color: #bbb; letter-spacing: 0.06em; width: 30px; flex-shrink: 0; }
+    .lvt { font-size: 10px; color: #111; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lvc { font-size: 8px; color: #bbb; letter-spacing: 0.04em; text-transform: uppercase; flex-shrink: 0; }
+    #lv-prev { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 64px; gap: 16px; min-width: 0; }
+    #lv-img { max-width: 100%; max-height: calc(100% - 48px); object-fit: contain; opacity: 0; transition: opacity .2s; display: block; }
+    #lv-img.vis { opacity: 1; }
+    #lv-cap { font-size: 8px; color: #aaa; letter-spacing: 0.1em; text-align: center; text-transform: uppercase; }
+
+    /* ── GRID INDEX VIEW ────────────────────────────────────── */
+    #gv { display: none; position: fixed; top: 54px; left: 0; right: 0; bottom: 0; z-index: 45; background: #f5f5f3; overflow-y: auto; }
+    #gv.open { display: block; }
+    #gv-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(152px, 1fr));
+      gap: 1px; background: rgba(0,0,0,0.08); padding: 0;
+    }
+    .gv-cell { background: #f5f5f3; cursor: pointer; position: relative; }
+    .gv-num { display: block; font-size: 8px; letter-spacing: 0.1em; color: #ccc; padding: 7px 8px 4px; font-variant-numeric: tabular-nums; }
+    .gv-sq { width: 100%; background: #e6e6e4; }
+    .gv-sq img { width: 100%; height: auto; display: block; opacity: 0; transition: opacity .18s; }
+    .gv-sq img.vis { opacity: 1; }
+    .gv-sq::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 0 0px #111; transition: box-shadow .08s; pointer-events: none; }
+    .gv-cell:hover .gv-sq::after { box-shadow: inset 0 0 0 2px #111; }
+    .gv-info { padding: 4px 8px 9px; }
+    .gv-year { display: block; font-size: 8px; letter-spacing: 0.06em; color: #888; }
+    .gv-cat  { display: block; font-size: 7px; letter-spacing: 0.13em; text-transform: uppercase; color: #ccc; margin-top: 1px; }
+
+    /* ── ABOUT ──────────────────────────────────────────────── */
+    #about { display: none; position: fixed; inset: 0; z-index: 46; background: #f5f5f3; }
+    #about.open { display: flex; align-items: center; justify-content: center; }
+    .about-inner { max-width: 480px; width: 100%; padding: 0 32px; }
+    .about-inner p { font-size: 13px; line-height: 1.75; color: #333; margin-bottom: 1.4em; }
+    .about-inner p:last-child { margin-bottom: 0; }
+    .about-close { position: absolute; top: 0; right: 0; height: 54px; padding: 0 26px; font-family: inherit; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #bbb; background: none; border: none; cursor: pointer; transition: color .12s; }
+    .about-close:hover { color: #111; }
+
+    /* ── FILTER PANEL ────────────────────────────────────────── */
+    #fpanel {
+      display: none; position: fixed;
+      top: 54px; right: 18px; z-index: 48;
+      background: #f5f5f3;
+      border: 1px solid rgba(0,0,0,0.09);
+      min-width: 148px; padding: 5px 0;
+    }
+    #fpanel.open { display: block; }
+    .fp-cat {
+      display: flex; align-items: center; gap: 9px;
+      width: 100%; padding: 7px 16px;
+      font-family: inherit; font-size: 9px;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: #ccc; background: none; border: none;
+      cursor: pointer; text-align: left; transition: color 0.08s;
+    }
+    .fp-cat:hover { color: #666; }
+    .fp-cat.vis { color: #111; }
+    .fp-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+    .fp-all {
+      display: block; width: 100%; margin-top: 3px;
+      padding: 7px 16px 6px;
+      font-family: inherit; font-size: 8px;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: #bbb; background: none; border: none;
+      border-top: 1px solid rgba(0,0,0,0.06);
+      cursor: pointer; text-align: left; transition: color 0.08s;
+    }
+    .fp-all:hover { color: #333; }
+  </style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<div id="hud">
+  <div class="tl">
+    <img src="/logo.svg" alt="Romanese" class="logo-img">
+    <div class="meta" id="hmeta"></div>
+  </div>
+  <div class="tr">
+    <button class="hb" id="blist">Lista</button>
+    <button class="hb" id="bgriglia">Griglia</button>
+    <div class="tr-sep"></div>
+    <button class="hb" id="bmappa">Mappa</button>
+    <button class="hb" id="bprofondita">Fuga</button>
+    <button class="hb" id="bsfera">Sfera</button>
+    <div class="tr-sep"></div>
+    <span class="zt" id="zt">0%</span>
+    <div class="tr-sep"></div>
+    <button class="hb" id="bfiltro">Categorie</button>
+    <div class="tr-sep"></div>
+    <button class="hb" id="babout">About</button>
+  </div>
+</div>
+
+<div id="fpanel">
+  <button class="fp-cat vis" data-cat="DOCUMENTI"><span class="fp-dot"></span>Documenti</button>
+  <button class="fp-cat vis" data-cat="FOTO POLAROID"><span class="fp-dot"></span>Polaroid</button>
+  <button class="fp-cat vis" data-cat="FOTO SPARSE"><span class="fp-dot"></span>Fotografie</button>
+  <button class="fp-cat vis" data-cat="LIBRETTI"><span class="fp-dot"></span>Libretti</button>
+  <button class="fp-cat vis" data-cat="OGGETTI"><span class="fp-dot"></span>Oggetti</button>
+  <button class="fp-cat vis" data-cat="PORTAFOTO"><span class="fp-dot"></span>Portafoto</button>
+  <button class="fp-all" id="fp-all">Mostra tutte</button>
+</div>
+
+<div id="prog"></div>
+<div id="tip"></div>
+
+<div id="lb">
+  <div class="lb-bar">
+    <span class="lb-n" id="lc"></span>
+    <button class="lb-x" id="lx">Chiudi</button>
+  </div>
+  <div class="lb-mid">
+    <button class="lb-arr" id="lp">&#8592;</button>
+    <img id="li" src="" alt="">
+    <button class="lb-arr" id="ln">&#8594;</button>
+  </div>
+  <div class="lb-bot">
+    <div id="lt"></div>
+    <div class="lb-r"><div id="lm"></div><div id="ls"></div></div>
+  </div>
+</div>
+
+<div id="lv">
+  <div id="lv-list"></div>
+  <div id="lv-prev">
+    <img id="lv-img" src="" alt="">
+    <div id="lv-cap"></div>
+  </div>
+</div>
+
+<div id="gv"><div id="gv-grid"></div></div>
+
+<div id="about">
+  <div class="about-inner">
+    <p>Questo progetto è un archivio digitale dedicato alla memoria di Romana, costruito attraverso fotografie, documenti, oggetti e testimonianze legate alla vita del paese.</p>
+    <p>La maggior parte dell'archivio è conservata da Antioco Mariani, che ha messo a disposizione il materiale raccolto nel corso degli anni. Il sito nasce per preservare e condividere queste storie, creando un archivio aperto e in continua evoluzione.</p>
+  </div>
+</div>
+
+<div id="ov">Caricamento…</div>
+
+<script>
+'use strict';
+
+// ── MAPPA ─────────────────────────────────────────────────────────────────────
+const CW = 11000, CH = 7000;
+const MNY = 1958, MXY = 2004;
+const PX = 600, PY = 500;
+const toX = y => PX + ((y - MNY) / (MXY - MNY)) * (CW - PX * 2);
+const toY = h => PY + (h / 360) * (CH - PY * 2);
+function dj(str, salt, range) {
+  let h = (salt * 7919) | 0;
+  for (let i = 0; i < str.length; i++) h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+  return ((h & 0x7fffffff) % 10000 / 10000 - 0.5) * range;
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function extractYear(p) {
+  let m;
+  // anno a 4 cifre
+  if ((m = p.match(/\b(19\d{2}|20\d{2})\b/))) return +m[1];
+  // DD:MM:AA
+  if ((m = p.match(/\d{2}:\d{2}:(\d{2})\b/))) { const y = +m[1]; return y > 20 ? 1900+y : 2000+y; }
+  // mese abbreviato + anno 2 cifre (es. LUG93)
+  if ((m = p.match(/\b(?:AGO|LUG|OTT|GIU|MAG|APR|MAR|FEB|GEN|SET|NOV|DIC)\s*(\d{2})\b/i))) { const y = +m[1]; return y > 20 ? 1900+y : 2000+y; }
+  // ROMA/ROMA91 + 2 cifre (es. "ROMA 91", "ROMA91")
+  if ((m = p.match(/\bROMA\s*(\d{2})(?!\d)/i))) { const y = +m[1]; if (y >= 60 && y <= 99) return 1900+y; }
+  return null;
+}
+function extractPosYear(p, seed) {
+  // anno approssimato per posizionamento (non mostrato nel tooltip)
+  let m;
+  // ANNI 90 / ANN 80 / ANNO 70 → posizione casuale nel decennio
+  if ((m = p.match(/\bANN[OI]?\s*(\d{2})(?!\d)/i))) {
+    const base = 1900 + +m[1];
+    return base + Math.floor(((dj(p, seed, 2) + 1) / 2) * 10);
+  }
+  // range tipo "68-70" → primo anno del range
+  if ((m = p.match(/\b([6-9]\d)-\d{2}/))) return 1900 + +m[1];
+  // completamente sconosciuto → casuale su tutto il range
+  return Math.round(MNY + ((dj(p, seed, 2) + 1) / 2) * (MXY - MNY));
+}
+const getCat   = p => p.split('/')[0];
+const getTitle = p => p.split('/').pop().replace(/\.[^.]+$/, '').replace(/^\[[\d\s:/]+\]\s*/, '').replace(/_+/g, ' ').trim();
+const imgUrl   = p => 'img/' + p.split('/').map(encodeURIComponent).join('/');
+const thumbUrl = p => 'thumbs/' + (window._thumbHashes && window._thumbHashes[p] ? window._thumbHashes[p] : 'x') + '.jpg';
+function getSize(c, t) {
+  const u = t.toUpperCase();
+  if (u.includes('COPERTINA') || u.includes('COVER')) return 220;
+  if (c === 'LIBRETTI') return 175;
+  if (c === 'OGGETTI')  return 110;
+  return 148;
+}
+const CATS = {'DOCUMENTI':'Documenti','FOTO POLAROID':'Polaroid','FOTO SPARSE':'Fotografie','LIBRETTI':'Libretti','OGGETTI':'Oggetti','PORTAFOTO':'Portafoto'};
+
+// Spread dal centroide: le foto si espandono proporzionalmente al zoom.
+// sp = sc / SC_MIN — invariante: al zoom minimo le foto sono alle posizioni originali.
+const SC_MIN = 0.10;
+const FOCAL  = 1800;
+const catOrder = ['DOCUMENTI','FOTO POLAROID','FOTO SPARSE','LIBRETTI','OGGETTI','PORTAFOTO'];
+const GRID_ROW_H = (CH - 2 * PY) / catOrder.length;
+const SPHERE_CAM_MUL = 4.5; // distanza camera = N × raggio sfera
+const SPHERE_ITEM_F  = 0.09; // dimensione foto = frazione del raggio sfera
+
+// Lerp posizione e wz in base alla modalità corrente
+function getMx(it) { return it.mx  + (it.mx1  - it.mx)  * modeT; }
+function getMy(it) { return it.my  + (it.my1  - it.my)  * modeT; }
+function getWz(it) { return it.wz0 + (it.wz1  - it.wz0) * modeT; }
+
+function itemPos(it) {
+  const mx = getMx(it), my = getMy(it);
+  const sp = sc / SC_MIN;
+  return {
+    wx: centX + (mx - centX) * sp,
+    wy: centY + (my - centY) * sp
+  };
+}
+
+// Proiezione prospettica: posizione schermo + fattore profondità
+function project(it) {
+  const { wx, wy } = itemPos(it);
+  const wz = getWz(it);
+  const sx = wx * sc + tx;
+  const sy = wy * sc + ty;
+  const depth = FOCAL / (FOCAL + wz);
+  const vpx = VW * 0.5, vpy = VH * 0.5;
+  return {
+    sx: vpx + (sx - vpx) * depth,
+    sy: vpy + (sy - vpy) * depth,
+    depth
+  };
+}
+
+// Dimensioni reali in world units basate sull'aspect ratio
+function itemDims(it) {
+  const asp = it.aspect || 1;
+  const sw = asp >= 1 ? it.s : it.s * asp;
+  const sh = asp >= 1 ? it.s / asp : it.s;
+  return { sw, sh };
+}
+
+// ── STATO ─────────────────────────────────────────────────────────────────────
+let items = [], tx = 0, ty = 0, sc = 0.1;
+let fitSc = 0, fitTx = 0, fitTy = 0;
+let floorTx = 0, floorTy = 0;
+let grigliaFloorTx = 0, grigliaFloorTy = 0;
+let mode1InitSc = 0.14, mode1InitTx = 0, mode1InitTy = 0;
+let centX = 0, centY = 0;           // centroide corrente (lerp tra i due modi)
+let centX0 = 0, centY0 = 0;         // centroide modo 0 (mappa XY)
+let centX1 = 0, centY1 = 0;         // centroide modo 1 (tunnel temporale)
+let modeT      = 0;                  // 0 = mappa, 1 = profondità — lerp
+let modeTarget = 0;
+let vx = 0, vy = 0; // inertia per il pan
+let hiddenCats = new Set(); // categorie nascoste dal filtro
+const zt = document.getElementById('zt');
+let hover = null, dirty = true, loadedCount = 0, introStarted = false;
+let dItems = [], dIdx = null;
+let mouseX = 0, mouseY = 0, mouseStale = false;
+let drg = false, moved = false, x0 = 0, y0 = 0, tx0 = 0, ty0 = 0;
+let lastPX = 0, lastPY = 0, lastPT = 0;
+let pd = null;
+let inFlight = 0, loadQueue = [];
+let sphInFlight = 0;
+let sphereMode = false;
+let sphereT = 0, sphereTarget = 0;
+let grigliaT = 0, grigliaTarget = 0; // 0 = mappa/profondità, 1 = sfera — lerp
+let sphRotX = 0.3, sphRotY = 0;
+let sphRotVX = 0, sphRotVY = 0;
+let sphZoom = 1, sphZoomTarget = 1, sphZoomStable = 0;
+let canvasZoomTarget = SC_MIN, canvasPivotX = 0, canvasPivotY = 0;
+
+// ── INTRO ─────────────────────────────────────────────────────────────────────
+let introPhase = 0; // 0=off, 1=flash, 2=scatter
+let introFlashIdx = 0, introFlashHold = 0, introScatterT = 0;
+let introFlashOrder = [];
+const INTRO_FLASH_SIZE = 240;   // px max-side durante il flash
+const INTRO_FLASH_COUNT = 12;   // quante immagini lampeggiare
+const INTRO_FLASH_HOLD = 5;     // frame per immagine (~83ms a 60fps) → 1s flash
+const INTRO_SCATTER_SPD = 0.018; // velocità scatter (~56 frame = 0.9s)
+let sphRotX0 = 0, sphRotY0 = 0;
+
+// ── CANVAS ────────────────────────────────────────────────────────────────────
+const cv  = document.getElementById('c');
+const ctx = cv.getContext('2d', { alpha: false });
+const tip = document.getElementById('tip');
+let DPR = 1, VW = 0, VH = 0;
+
+function resize() {
+  DPR = window.devicePixelRatio || 1;
+  VW  = window.innerWidth;
+  VH  = window.innerHeight;
+  cv.width  = VW * DPR;
+  cv.height = VH * DPR;
+  cv.style.width  = VW + 'px';
+  cv.style.height = VH + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  dirty = true;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ── CODA CARICAMENTO ─────────────────────────────────────────────────────────
+const CONCURRENCY = 8;
+
+function processQueue() {
+  while (inFlight < CONCURRENCY && loadQueue.length > 0) {
+    const item = loadQueue.shift();
+    inFlight++;
+    const img = new Image();
+    img.onload = () => {
+      item.aspect = img.naturalWidth / img.naturalHeight;
+      const p = typeof createImageBitmap !== 'undefined'
+        ? createImageBitmap(img).catch(() => img)
+        : Promise.resolve(img);
+      p.then(bm => { item.bm = bm; inFlight--; onLoaded(); processQueue(); });
+    };
+    img.onerror = () => { inFlight--; onLoaded(); processQueue(); };
+    img.src = item.thumbSrc;
+  }
+}
+
+function onLoaded() {
+  loadedCount++;
+  document.getElementById('prog').style.width = (loadedCount / items.length * 100) + '%';
+  dirty = true;
+  if (loadedCount === items.length && !introStarted) {
+    introStarted = true;
+    document.getElementById('prog').style.opacity = '0';
+    const ov = document.getElementById('ov');
+    ov.style.opacity = '0';
+    setTimeout(() => { ov.style.display = 'none'; startIntro(); }, 300);
+  }
+}
+
+// ── SEPARAZIONE — evita sovrapposizioni ──────────────────────────────────────
+function separateItems() {
+  const GAP = 22; // world units di margine tra item
+  for (let iter = 0; iter < 150; iter++) {
+    let anyMoved = false;
+    for (let i = 0; i < items.length; i++) {
+      for (let j = i + 1; j < items.length; j++) {
+        const a = items[i], b = items[j];
+        const minD = (a.s + b.s) * 0.5 + GAP;
+        const dx = b.mx - a.mx, dy = b.my - a.my;
+        const d2 = dx * dx + dy * dy;
+        if (d2 >= minD * minD) continue;
+        const d    = Math.sqrt(d2) || 0.1;
+        const push = (minD - d) * 0.55;
+        const nx = dx / d, ny = dy / d;
+        a.mx -= nx * push * 0.5;
+        a.my -= ny * push;
+        b.mx += nx * push * 0.5;
+        b.my += ny * push;
+        anyMoved = true;
+      }
+    }
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      it.mx = Math.max(PX * 0.4, Math.min(CW - PX * 0.4, it.mx));
+      it.my = Math.max(PY * 0.4, Math.min(CH - PY * 0.4, it.my));
+    }
+    if (!anyMoved) break;
+  }
+  // riscrive jx/jy in modo che itemPos() al livello di zoom minimo usi posizioni risolte
+  for (const it of items) {
+    it.jx = it.mx - it.bx;
+    it.jy = it.my - it.by;
+  }
+}
+
+// ── REVEAL SEQUENZIALE ────────────────────────────────────────────────────────
+function startReveal() {
+  const sorted = [...items].sort((a, b) => {
+    if (!a.year && !b.year) return 0;
+    if (!a.year) return 1;
+    if (!b.year) return -1;
+    return a.year - b.year || a.my - b.my;
+  });
+  let i = 0;
+  function next() {
+    if (i >= sorted.length) return;
+    sorted[i++].visible = true;
+    dirty = true;
+    setTimeout(next, 28); // ~6s totali per tutti i 207
+  }
+  next();
+}
+
+// ── RENDER SFERA ──────────────────────────────────────────────────────────────
+function renderSphere(masterAlpha = 1) {
+  ctx.globalAlpha = masterAlpha;
+  ctx.fillStyle = '#f5f5f3';
+  ctx.fillRect(0, 0, VW, VH);
+  ctx.globalAlpha = 1;
+
+  const R = Math.min(VW, VH) * 0.44 * sphZoom;
+  const CAM = R * SPHERE_CAM_MUL;
+  const cosX = Math.cos(sphRotX), sinX = Math.sin(sphRotX);
+  const cosY = Math.cos(sphRotY), sinY = Math.sin(sphRotY);
+
+  const proj = [];
+  for (const it of items) {
+    if (!it.visible) continue;
+    const x1 = it.spX * cosY + it.spZ * sinY;
+    const z1 = -it.spX * sinY + it.spZ * cosY;
+    const y2 = it.spY * cosX - z1 * sinX;
+    const z2 = it.spY * sinX + z1 * cosX;
+    const depth = CAM / (CAM + z2 * R);
+    const sx = VW / 2 + x1 * R * depth;
+    const sy = VH / 2 + y2 * R * depth;
+    const { sw, sh } = itemDims(it);
+    const f = SPHERE_ITEM_F * R * depth;
+    const iw = sw * f / it.s | 0;
+    const ih = sh * f / it.s | 0;
+    proj.push({ it, sx, sy, z2, depth, iw, ih });
+  }
+  proj.sort((a, b) => b.z2 - a.z2);
+
+  // linee cronologiche tra le miniature (ordine anno)
+  {
+    const chrono = proj.slice().sort((a, b) => (a.it.year || 9999) - (b.it.year || 9999));
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0,0,0,0.13)';
+    ctx.lineWidth = 0.5;
+    ctx.globalAlpha = 0.6 * masterAlpha;
+    ctx.beginPath();
+    let first = true;
+    for (const p of chrono) {
+      if (p.it.alpha < 0.05) continue;
+      if (first) { ctx.moveTo(p.sx, p.sy); first = false; }
+      else ctx.lineTo(p.sx, p.sy);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
+  let hov = null;
+  for (const p of proj) {
+    const { it, sx, sy, z2, depth, iw, ih } = p;
+    if (iw < 1 || ih < 1) continue;
+    const fog = z2 > 0 ? Math.max(0.1, 1 - z2 * 0.85) : 1.0;
+    const a = it.alpha * fog * masterAlpha;
+    if (a < 0.04) continue;
+    // cull fuori schermo
+    if (sx + iw / 2 < 0 || sx - iw / 2 > VW || sy + ih / 2 < 0 || sy - ih / 2 > VH) continue;
+
+    // LOD: carica full-res solo quando zoom è fermo e foto abbastanza grande (max 6 in parallelo)
+    if (Math.max(iw, ih) > 100 && !it.fullBm && !it.fullLoading && sphInFlight < 2
+        && sphZoomStable > 30) {
+      it.fullLoading = true; sphInFlight++;
+      const img = new Image();
+      img.onload = () => {
+        const p2 = typeof createImageBitmap !== 'undefined'
+          ? createImageBitmap(img).catch(() => img) : Promise.resolve(img);
+        p2.then(bm => { it.fullBm = bm; it.fullLoading = false; sphInFlight--; dirty = true; });
+      };
+      img.onerror = () => { it.fullLoading = false; sphInFlight--; };
+      img.src = it.url;
+    }
+
+    ctx.globalAlpha = a;
+    const bm = (Math.max(iw, ih) > 100 && it.fullBm) ? it.fullBm : it.bm;
+    if (bm) {
+      ctx.drawImage(bm, sx - iw / 2 | 0, sy - ih / 2 | 0, iw, ih);
+    } else {
+      ctx.fillStyle = it.hex || '#d4d4d0';
+      ctx.fillRect(sx - iw / 2 | 0, sy - ih / 2 | 0, iw, ih);
+    }
+    ctx.globalAlpha = 1;
+    if (it === hover) hov = { sx, sy, iw, ih };
+  }
+
+  if (hov) {
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = Math.max(1.5, 3 * Math.min(sphZoom, 1));
+    ctx.strokeRect(hov.sx - hov.iw / 2 + 0.5 | 0, hov.sy - hov.ih / 2 + 0.5 | 0, hov.iw - 1, hov.ih - 1);
+  }
+}
+
+// proiezione sfera: restituisce posizione schermo + z2 per il fog/sort
+function projectSphere(it) {
+  const R   = Math.min(VW, VH) * 0.42 * sphZoom;
+  const CAM = R * SPHERE_CAM_MUL;
+  const cosX = Math.cos(sphRotX), sinX = Math.sin(sphRotX);
+  const cosY = Math.cos(sphRotY), sinY = Math.sin(sphRotY);
+  const x1 = it.spX * cosY + it.spZ * sinY;
+  const z1 = -it.spX * sinY + it.spZ * cosY;
+  const y2 = it.spY * cosX - z1 * sinX;
+  const z2 = it.spY * sinX + z1 * cosX;
+  const depth = CAM / (CAM + z2 * R);
+  it.sphZ2 = z2;
+  return { sx: VW / 2 + x1 * R * depth, sy: VH / 2 + y2 * R * depth, depth, z2 };
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render() {
+  // fast path: sfera completa
+  if (sphereT > 0.998 && sphereTarget === 1) { renderSphere(1); return; }
+
+  ctx.fillStyle = '#f5f5f3';
+  ctx.fillRect(0, 0, VW, VH);
+
+  const mapAlpha = 1 - sphereT; // elementi solo-mappa sfumano uscendo
+
+  // griglie anni verticali
+  if (mapAlpha > 0.01) {
+    ctx.save();
+    ctx.globalAlpha = mapAlpha;
+    ctx.strokeStyle = 'rgba(0,0,0,0.05)';
+    ctx.lineWidth = 1;
+    for (let y = 1960; y <= 2000; y += 5) {
+      const x = toX(y) * sc + tx;
+      if (x < -1 || x > VW + 1) continue;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, VH); ctx.stroke();
+    }
+    const fs = Math.max(8, 200 * sc);
+    ctx.font = `700 ${fs}px 'NHG','Helvetica Neue',Arial`;
+    ctx.fillStyle = 'rgba(0,0,0,0.04)';
+    ctx.textBaseline = 'top';
+    for (let d = 1960; d <= 2000; d += 10) {
+      const x = toX(d) * sc + tx;
+      if (x > VW + fs * 4 || x + fs * 4 < 0) continue;
+      ctx.fillText(d, x, PY * 0.25 * sc + ty);
+    }
+    ctx.restore();
+  }
+
+  // barra date fissa in basso
+  if (mapAlpha > 0.01) {
+    ctx.save();
+    ctx.globalAlpha = mapAlpha;
+    ctx.font = '600 11px \'NHG\',\'Helvetica Neue\',Arial';
+    ctx.textBaseline = 'bottom';
+    ctx.textAlign = 'center';
+    const barY = VH - 10;
+    ctx.fillStyle = 'rgba(245,245,243,0.92)';
+    ctx.fillRect(0, VH - 28, VW, 28);
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, VH - 28); ctx.lineTo(VW, VH - 28); ctx.stroke();
+    for (let y = 1960; y <= 2000; y += 5) {
+      const rawX = toX(y) * sc + tx;
+      const onScreen = rawX >= 0 && rawX <= VW;
+      const sx = Math.max(22, Math.min(VW - 22, rawX));
+      ctx.strokeStyle = onScreen ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(sx, VH - 28); ctx.lineTo(sx, VH - 22); ctx.stroke();
+      ctx.fillStyle = onScreen ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.25)';
+      ctx.fillText(y, sx, barY);
+    }
+    ctx.textAlign = 'left';
+    ctx.restore();
+  }
+
+  // ── griglia: righe per categoria, etichette sinistra ─────────────────────────
+  if (grigliaT > 0.01) {
+    ctx.save();
+    ctx.globalAlpha = grigliaT;
+    ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= catOrder.length; i++) {
+      const y = (PY + i * GRID_ROW_H) * sc + ty;
+      if (y < -2 || y > VH + 2) continue;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(VW, y); ctx.stroke();
+    }
+    ctx.font = '500 9px \'NHG\',\'Helvetica Neue\',Arial';
+    ctx.fillStyle = '#999';
+    ctx.textBaseline = 'middle';
+    catOrder.forEach((cat, i) => {
+      const y = (PY + (i + 0.5) * GRID_ROW_H) * sc + ty;
+      if (y < 8 || y > VH - 8) return;
+      ctx.fillText((CATS[cat] || cat).toUpperCase(), 12, y);
+    });
+    ctx.restore();
+  }
+
+  // ── precomputa posizioni sfera UNA VOLTA per frame (cos/sin condivisi) ────────
+  const R_sph = Math.min(VW, VH) * 0.42 * sphZoom;
+  if (sphereT > 0.005) {
+    const CAM_s = R_sph * SPHERE_CAM_MUL;
+    const cosX_s = Math.cos(sphRotX), sinX_s = Math.sin(sphRotX);
+    const cosY_s = Math.cos(sphRotY), sinY_s = Math.sin(sphRotY);
+    for (const it of items) {
+      const x1 = it.spX * cosY_s + it.spZ * sinY_s;
+      const z1 = -it.spX * sinY_s + it.spZ * cosY_s;
+      const y2 = it.spY * cosX_s - z1 * sinX_s;
+      const z2 = it.spY * sinX_s + z1 * cosX_s;
+      const d  = CAM_s / (CAM_s + z2 * R_sph);
+      it._spSx = VW / 2 + x1 * R_sph * d;
+      it._spSy = VH / 2 + y2 * R_sph * d;
+      it._spDp = d;
+      it.sphZ2 = z2;
+    }
+  }
+
+  // ── raccoglie item con posizione lerp mappa↔sfera ────────────────────────────
+  const proj = [];
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    if (!it.visible) continue;
+    const { sw, sh } = itemDims(it);
+    let sx, sy, iw, ih, sortZ;
+
+    if (sphereT < 0.005 && grigliaT < 0.005) {
+      const p = project(it);
+      sx = p.sx; sy = p.sy;
+      iw = sw * sc * p.depth | 0;
+      ih = sh * sc * p.depth | 0;
+      sortZ = getWz(it);
+    } else if (sphereT >= grigliaT) {
+      const p0 = project(it);
+      const t   = sphereT;
+      sx = p0.sx + (it._spSx - p0.sx) * t;
+      sy = p0.sy + (it._spSy - p0.sy) * t;
+      const sphF = SPHERE_ITEM_F * R_sph * it._spDp;
+      iw = (sw * sc * p0.depth + (sw * sphF / it.s - sw * sc * p0.depth) * t) | 0;
+      ih = (sh * sc * p0.depth + (sh * sphF / it.s - sh * sc * p0.depth) * t) | 0;
+      sortZ = getWz(it) * (1 - t) + it.sphZ2 * 1000 * t;
+    } else {
+      // transizione verso griglia
+      const p0 = project(it);
+      const t = grigliaT;
+      const gx = it.mx3 * sc + tx;
+      const gy = it.my3 * sc + ty;
+      sx = p0.sx + (gx - p0.sx) * t;
+      sy = p0.sy + (gy - p0.sy) * t;
+      iw = (sw * sc * p0.depth + (sw * sc - sw * sc * p0.depth) * t) | 0;
+      ih = (sh * sc * p0.depth + (sh * sc - sh * sc * p0.depth) * t) | 0;
+      sortZ = getWz(it) * (1 - t);
+    }
+
+    const ix = sx - iw / 2 | 0, iy = sy - ih / 2 | 0;
+    proj.push({ it, sx, sy, iw, ih, ix, iy, sortZ });
+  }
+  proj.sort((a, b) => b.sortZ - a.sortZ);
+
+  // linee cronologiche (sempre, lerp incluso)
+  {
+    const chrono = proj.slice().sort((a, b) =>
+      (a.it.year || 9999) - (b.it.year || 9999) || a.it.my - b.it.my);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+    ctx.lineWidth = 0.5;
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    let first = true;
+    for (const p of chrono) {
+      if (p.it.alpha < 0.05) continue;
+      if (first) { ctx.moveTo(p.sx, p.sy); first = false; }
+      else ctx.lineTo(p.sx, p.sy);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── disegna item ─────────────────────────────────────────────────────────────
+  if (sphereT > 0.005) { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; }
+  let hov = null;
+  for (const p of proj) {
+    const { it, sx, sy, iw, ih, ix, iy } = p;
+    if (iw < 1 || ih < 1 || ix + iw < 0 || ix > VW || iy + ih < 0 || iy > VH) continue;
+
+    // fog sfera: back-hemisphere sfuma durante e dopo la transizione
+    const sphFog = (it.sphZ2 || 0) > 0 ? Math.max(0.08, 1 - (it.sphZ2 || 0) * 0.85) : 1;
+    const fog = 1 + (sphFog - 1) * sphereT;
+    const a = it.alpha * fog * it.fa;
+    if (a < 0.03) continue;
+
+    // LOD mappa (non durante transizione verso sfera)
+    if (sphereT < 0.1 && Math.max(iw, ih) > 100 && !it.fullBm && !it.fullLoading) {
+      it.fullLoading = true;
+      const img = new Image();
+      img.onload = () => {
+        const p2 = typeof createImageBitmap !== 'undefined'
+          ? createImageBitmap(img).catch(() => img) : Promise.resolve(img);
+        p2.then(bm => { it.fullBm = bm; it.fullLoading = false; dirty = true; });
+      };
+      img.onerror = () => { it.fullLoading = false; };
+      img.src = it.url;
+    }
+
+    const bm = (Math.max(iw, ih) > 100 && it.fullBm) ? it.fullBm : it.bm;
+    ctx.globalAlpha = a;
+    const sc2 = bm ? 1 : (0.82 + a * 0.18);
+    const diw = iw * sc2 | 0, dih = ih * sc2 | 0;
+    const dix = ix + ((iw - diw) >> 1), diy = iy + ((ih - dih) >> 1);
+    if (bm) {
+      ctx.drawImage(bm, dix, diy, diw, dih);
+    } else {
+      ctx.fillStyle = it.hex || '#d4d4d0';
+      ctx.fillRect(dix, diy, diw, dih);
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillRect(dix, diy, diw, dih * 0.4);
+    }
+    ctx.globalAlpha = 1;
+    if (it === hover) hov = { ix, iy, iw, ih };
+  }
+
+  if (hov) {
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = Math.max(1.5, 3 * Math.min(sc, 1));
+    ctx.strokeRect(hov.ix + .5, hov.iy + .5, hov.iw - 1, (hov.ih || hov.iw) - 1);
+  }
+}
+
+// ── RAF LOOP ──────────────────────────────────────────────────────────────────
+function startIntro() {
+  introFlashOrder = [...items].sort(() => Math.random() - 0.5);
+  // precarica full-res per le prime N foto del flash → nitide su Retina
+  introFlashOrder.slice(0, INTRO_FLASH_COUNT).forEach(it => {
+    if (it.fullBm || it.fullLoading) return;
+    it.fullLoading = true;
+    const img = new Image();
+    img.onload = () => {
+      const p = typeof createImageBitmap !== 'undefined'
+        ? createImageBitmap(img).catch(() => img) : Promise.resolve(img);
+      p.then(bm => { it.fullBm = bm; it.fullLoading = false; dirty = true; });
+    };
+    img.onerror = () => { it.fullLoading = false; };
+    img.src = it.url;
+  });
+  introFlashIdx = 0; introFlashHold = 0; introScatterT = 0;
+  introPhase = 1;
+}
+
+function renderIntro() {
+  ctx.fillStyle = '#f5f5f3';
+  ctx.fillRect(0, 0, VW, VH);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
+  if (introPhase === 1) {
+    const it = introFlashOrder[introFlashIdx % introFlashOrder.length];
+    const aspect = it.aspect || 1;
+    const iw = (aspect >= 1 ? INTRO_FLASH_SIZE : INTRO_FLASH_SIZE * aspect) | 0;
+    const ih = (aspect >= 1 ? INTRO_FLASH_SIZE / aspect : INTRO_FLASH_SIZE) | 0;
+    ctx.globalAlpha = 1;
+    const bm = it.fullBm || it.bm;
+    if (bm) {
+      ctx.drawImage(bm, (VW / 2 - iw / 2) | 0, (VH / 2 - ih / 2) | 0, iw, ih);
+    } else {
+      ctx.fillStyle = it.hex || '#ccc';
+      ctx.fillRect((VW / 2 - iw / 2) | 0, (VH / 2 - ih / 2) | 0, iw, ih);
+    }
+  } else if (introPhase === 2) {
+    const t = 1 - Math.pow(1 - introScatterT, 2.5);
+    const alpha = Math.min(1, introScatterT * 2.5);
+    for (const it of items) {
+      const { sw, sh } = itemDims(it);
+      const p = project(it);
+      const fw = sw * sc * p.depth, fh = sh * sc * p.depth;
+      if (fw < 1) continue;
+      const aspect = it.aspect || 1;
+      const sw0 = aspect >= 1 ? INTRO_FLASH_SIZE : INTRO_FLASH_SIZE * aspect;
+      const sh0 = aspect >= 1 ? INTRO_FLASH_SIZE / aspect : INTRO_FLASH_SIZE;
+      const iw = (sw0 + (fw - sw0) * t) | 0;
+      const ih = (sh0 + (fh - sh0) * t) | 0;
+      if (iw < 1) continue;
+      const sx = (VW / 2 + (p.sx - VW / 2) * t) | 0;
+      const sy = (VH / 2 + (p.sy - VH / 2) * t) | 0;
+      ctx.globalAlpha = alpha;
+      if (it.bm) {
+        ctx.drawImage(it.bm, sx - iw / 2, sy - ih / 2, iw, ih);
+      } else {
+        ctx.fillStyle = it.hex || '#ccc';
+        ctx.fillRect(sx - iw / 2, sy - ih / 2, iw, ih);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+function tick() {
+  // ── intro animation ──────────────────────────────────────────────────────────
+  if (introPhase > 0) {
+    if (introPhase === 1) {
+      introFlashHold++;
+      if (introFlashHold >= INTRO_FLASH_HOLD) {
+        introFlashHold = 0;
+        introFlashIdx++;
+        if (introFlashIdx >= INTRO_FLASH_COUNT) {
+          introPhase = 2; introScatterT = 0;
+        }
+      }
+    } else if (introPhase === 2) {
+      introScatterT = Math.min(1, introScatterT + INTRO_SCATTER_SPD);
+      if (introScatterT >= 1) {
+        introPhase = 0;
+        items.forEach(it => { it.visible = true; it.alpha = 1; });
+        dirty = true;
+      }
+    }
+    renderIntro();
+    requestAnimationFrame(tick);
+    return;
+  }
+
+  // transizione verso/da sfera e griglia
+  if (Math.abs(sphereTarget - sphereT) > 0.001) {
+    sphereT += (sphereTarget - sphereT) * 0.10;
+    dirty = true;
+  }
+  if (Math.abs(grigliaTarget - grigliaT) > 0.001) {
+    grigliaT += (grigliaTarget - grigliaT) * 0.10;
+    dirty = true;
+  }
+  // animazione transizione modalità
+  if (Math.abs(modeT - modeTarget) > 0.001) {
+    modeT += (modeTarget - modeT) * 0.055;
+    centX = centX0 + (centX1 - centX0) * modeT;
+    centY = centY0 + (centY1 - centY0) * modeT;
+    dirty = true;
+  }
+  // fade-in miniature + lerp filtro categorie
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    if (it.visible && it.alpha < 1) { it.alpha = Math.min(1, it.alpha + 0.055); dirty = true; }
+    const tfa = hiddenCats.size === 0 || !hiddenCats.has(it.cat) ? 1 : 0.05;
+    if (Math.abs(it.fa - tfa) > 0.004) { it.fa += (tfa - it.fa) * 0.12; dirty = true; }
+    else it.fa = tfa;
+  }
+  // inertia pan — decelerazione fluida dopo il drag
+  if (!drg && (Math.abs(vx) > 0.3 || Math.abs(vy) > 0.3)) {
+    tx += vx; ty += vy;
+    vx *= 0.88; vy *= 0.88;
+    dirty = true;
+  }
+  // ritorno fluido al centro quando si è al floor zoom
+  {
+    const scFloor = modeTarget === 1 ? mode1InitSc : SC_MIN;
+    const tgtTx   = modeTarget === 1 ? mode1InitTx : (grigliaT > 0.5 ? grigliaFloorTx : floorTx);
+    const tgtTy   = modeTarget === 1 ? mode1InitTy : (grigliaT > 0.5 ? grigliaFloorTy : floorTy);
+    if (!drg && sc <= scFloor && fitSc > 0) {
+      const dx = tgtTx - tx, dy = tgtTy - ty;
+      if (Math.abs(dx) > 0.2 || Math.abs(dy) > 0.2) {
+        tx += dx * 0.07; ty += dy * 0.07;
+        dirty = true;
+      }
+    }
+  }
+  // inertia rotazione sfera + auto-rotazione in idle + lerp zoom
+  if (sphereMode) {
+    if (!drg && (Math.abs(sphRotVX) > 0.0002 || Math.abs(sphRotVY) > 0.0002)) {
+      sphRotX += sphRotVX; sphRotY += sphRotVY;
+      sphRotVX *= 0.91; sphRotVY *= 0.91;
+      dirty = true;
+    }
+    if (!drg && Math.abs(sphRotVY) < 0.001) {
+      sphRotY += 0.0008;
+      dirty = true;
+    }
+    if (Math.abs(sphZoomTarget - sphZoom) > 0.001) {
+      sphZoom += (sphZoomTarget - sphZoom) * 0.14;
+      zt.textContent = Math.round((sphZoom - 0.8) * 100) + '%';
+      sphZoomStable = 0;
+      dirty = true;
+    } else {
+      sphZoomStable++;
+    }
+  }
+  if (!sphereMode && sc !== canvasZoomTarget) {
+    const scFloor = modeTarget === 1 ? mode1InitSc : SC_MIN;
+    const logDiff = Math.log(canvasZoomTarget / sc);
+    const scNew = Math.abs(logDiff) > 0.0001
+      ? Math.max(scFloor, Math.min(3, sc * Math.exp(logDiff * 0.14)))
+      : canvasZoomTarget;
+    if (scNew !== sc) {
+      const ff = scNew / sc;
+      const zoomingOut = scNew < sc;
+      const pivX = zoomingOut ? VW / 2 : canvasPivotX;
+      const pivY = zoomingOut ? VH / 2 : canvasPivotY;
+      if (grigliaT > 0.5) {
+        tx = pivX * (1 - ff) + tx * ff;
+        ty = pivY * (1 - ff) + ty * ff;
+      } else {
+        tx = pivX * (1 - ff * ff) + tx * ff * ff - centX * sc * ff * (1 - ff);
+        ty = pivY * (1 - ff * ff) + ty * ff * ff - centY * sc * ff * (1 - ff);
+      }
+      sc = scNew;
+      clampPan();
+      zt.textContent = Math.round((sc - SC_MIN) * 100) + '%';
+      dirty = true;
+    }
+  }
+  if (mouseStale && !drg) {
+    mouseStale = false;
+    const h = sphereMode ? hitAtSphere(mouseX, mouseY) : hitAt(mouseX, mouseY);
+    if (h !== hover) { hover = h; cv.className = h ? 'ptr' : ''; dirty = true; }
+    if (h) {
+      tip.textContent = h.title + (h.year ? '  ·  ' + h.year : '');
+      tip.style.display = 'block';
+      tip.style.left = (mouseX + 14) + 'px';
+      tip.style.top  = (mouseY +  8) + 'px';
+    } else {
+      tip.style.display = 'none';
+    }
+  }
+  if (dirty) { render(); dirty = false; }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+// ── ZOOM / PAN ────────────────────────────────────────────────────────────────
+function clampPan() {
+  if (!items.length) return;
+  const margin = 24;
+  let wx0=Infinity, wx1=-Infinity, wy0=Infinity, wy1=-Infinity;
+  if (grigliaT > 0.5) {
+    for (const it of items) {
+      wx0 = Math.min(wx0, it.mx3 - it.s / 2);
+      wx1 = Math.max(wx1, it.mx3 + it.s / 2);
+      wy0 = Math.min(wy0, it.my3 - it.s / 2);
+      wy1 = Math.max(wy1, it.my3 + it.s / 2);
+    }
+  } else {
+    const sp = sc / SC_MIN;
+    for (const it of items) {
+      const ewx = centX + (getMx(it) - centX) * sp;
+      const ewy = centY + (getMy(it) - centY) * sp;
+      const hs = it.s / 2;
+      wx0 = Math.min(wx0, ewx - hs);
+      wx1 = Math.max(wx1, ewx + hs);
+      wy0 = Math.min(wy0, ewy - hs);
+      wy1 = Math.max(wy1, ewy + hs);
+    }
+  }
+  if (!isFinite(wx0) || !isFinite(wx1) || !isFinite(wy0) || !isFinite(wy1)) return;
+  if (wx1 * sc + tx < margin)       tx = margin - wx1 * sc;
+  if (wx0 * sc + tx > VW - margin)  tx = VW - margin - wx0 * sc;
+  if (wy1 * sc + ty < margin)       ty = margin - wy1 * sc;
+  if (wy0 * sc + ty > VH - margin)  ty = VH - margin - wy0 * sc;
+}
+
+function setZoom(f, cx, cy) {
+  const scFloor = modeTarget === 1 ? mode1InitSc : SC_MIN;
+  const ns = Math.max(scFloor, Math.min(3, sc * f));
+  const ff = ns / sc;
+  // dezoom: pivot al centro schermo → la vista si ricentra naturalmente
+  const px = f < 1 ? VW / 2 : cx;
+  const py = f < 1 ? VH / 2 : cy;
+  if (grigliaT > 0.5) {
+    tx = px * (1 - ff) + tx * ff;
+    ty = py * (1 - ff) + ty * ff;
+  } else {
+    tx = px * (1 - ff * ff) + tx * ff * ff - centX * sc * ff * (1 - ff);
+    ty = py * (1 - ff * ff) + ty * ff * ff - centY * sc * ff * (1 - ff);
+  }
+  sc = ns;
+  canvasZoomTarget = sc;
+  vx = 0; vy = 0;
+  zt.textContent = Math.round((sc - SC_MIN) * 100) + '%';
+  dirty = true;
+}
+
+function fitAll() {
+  if (!items.length) return;
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const it of items) {
+    const { sw, sh } = itemDims(it);
+    const mx = getMx(it), my = getMy(it);
+    x0 = Math.min(x0, mx - sw / 2);
+    x1 = Math.max(x1, mx + sw / 2);
+    y0 = Math.min(y0, my - sh / 2);
+    y1 = Math.max(y1, my + sh / 2);
+  }
+  const pad = 48;
+  const cw = x1 - x0, ch = y1 - y0;
+  // Le posizioni reali su schermo includono lo spread: larghezza_reale = cw * (sc/SC_MIN) * sc
+  // → sc = sqrt(SC_MIN * target_px / cw)
+  const sc_x = Math.sqrt(SC_MIN * (VW - pad * 2) / cw);
+  const sc_y = Math.sqrt(SC_MIN * (VH - pad * 2) / ch);
+  sc = Math.max(SC_MIN, Math.min(sc_x, sc_y));
+  // tx/ty in coordinate reali (con spread applicato)
+  const sp = sc / SC_MIN;
+  const rx0 = centX * (1 - sp) + x0 * sp;
+  const rx1 = centX * (1 - sp) + x1 * sp;
+  const ry0 = centY * (1 - sp) + y0 * sp;
+  const ry1 = centY * (1 - sp) + y1 * sp;
+  tx = (VW - (rx1 - rx0) * sc) / 2 - rx0 * sc;
+  ty = (VH - (ry1 - ry0) * sc) / 2 - ry0 * sc;
+  fitSc = sc; fitTx = tx; fitTy = ty;
+  canvasZoomTarget = sc; canvasPivotX = VW / 2; canvasPivotY = VH / 2;
+  zt.textContent = Math.round((sc - SC_MIN) * 100) + '%';
+  // posizione centrata a floor zoom (sc=SC_MIN, sp=1) — usata dal smooth return
+  floorTx = (VW - cw * SC_MIN) / 2 - x0 * SC_MIN;
+  floorTy = (VH - ch * SC_MIN) / 2 - y0 * SC_MIN;
+  dirty = true;
+}
+
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  const delta = e.deltaMode === 1 ? e.deltaY * 30 : e.deltaY;
+  if (sphereMode) {
+    sphZoomTarget = Math.max(0.8, Math.min(5, sphZoomTarget * Math.pow(1.001, -delta)));
+    dirty = true;
+    return;
+  }
+  const f = Math.pow(1.001, -delta);
+  const scFloor = modeTarget === 1 ? mode1InitSc : SC_MIN;
+  canvasZoomTarget = Math.max(scFloor, Math.min(3, canvasZoomTarget * f));
+  canvasPivotX = e.clientX; canvasPivotY = e.clientY;
+  dirty = true;
+}, { passive: false });
+function setActiveMode(id) {
+  ['blist', 'bmappa', 'bprofondita', 'bsfera', 'bgriglia'].forEach(b =>
+    document.getElementById(b).classList.remove('active'));
+  if (id) document.getElementById(id).classList.add('active');
+}
+
+function closeList() {
+  document.getElementById('lv').classList.remove('open');
+  document.getElementById('gv').classList.remove('open');
+  document.getElementById('about').classList.remove('open');
+}
+
+function goMappa() {
+  closeList();
+  sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
+  modeTarget = 0;
+  sc = fitSc; tx = fitTx; ty = fitTy;
+  canvasZoomTarget = sc; canvasPivotX = VW / 2; canvasPivotY = VH / 2;
+  vx = 0; vy = 0;
+  setActiveMode('bmappa');
+  zt.textContent = Math.round((sc - SC_MIN) * 100) + '%';
+  dirty = true;
+}
+
+function goProfondita() {
+  closeList();
+  sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
+  modeTarget = 1;
+  sc = mode1InitSc; tx = mode1InitTx; ty = mode1InitTy;
+  canvasZoomTarget = sc; canvasPivotX = VW / 2; canvasPivotY = VH / 2;
+  vx = 0; vy = 0;
+  setActiveMode('bprofondita');
+  zt.textContent = Math.round((sc - SC_MIN) * 100) + '%';
+  dirty = true;
+}
+
+function goSfera() {
+  if (sphereTarget === 1) return;
+  closeList();
+  grigliaTarget = 0;
+  sphereMode = true; sphereTarget = 1;
+  sphZoom = 1; sphZoomTarget = 1;
+  setActiveMode('bsfera');
+  hover = null; tip.style.display = 'none';
+  sphRotVX = 0; sphRotVY = 0;
+  dirty = true;
+}
+
+function buildGridView() {
+  const grid = document.getElementById('gv-grid');
+  grid.innerHTML = '';
+  const sorted = [...items].sort((a, b) => {
+    if (!a.year && !b.year) return 0;
+    if (!a.year) return 1; if (!b.year) return -1;
+    return a.year - b.year || a.cat.localeCompare(b.cat);
+  });
+  sorted.forEach((it, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'gv-cell';
+    const num = String(i + 1).padStart(3, '0');
+    cell.innerHTML =
+      `<span class="gv-num">${num}</span>` +
+      `<div class="gv-sq"><img data-src="${it.thumbSrc}" alt=""></div>` +
+      `<div class="gv-info"><span class="gv-year">${it.year || '—'}</span><span class="gv-cat">${CATS[it.cat] || it.cat}</span></div>`;
+    cell.addEventListener('click', () => openLB(it.idx));
+    grid.appendChild(cell);
+  });
+  const obs = new IntersectionObserver(entries => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      const img = e.target;
+      img.src = img.dataset.src;
+      img.onload = () => img.classList.add('vis');
+      obs.unobserve(img);
+    }
+  }, { rootMargin: '300px' });
+  grid.querySelectorAll('img[data-src]').forEach(img => obs.observe(img));
+}
+
+function goGriglia() {
+  const gv = document.getElementById('gv');
+  if (gv.classList.contains('open')) return;
+  document.getElementById('lv').classList.remove('open');
+  sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
+  dirty = true;
+  gv.classList.add('open');
+  setActiveMode('bgriglia');
+  if (items.length) buildGridView();
+}
+
+document.getElementById('bmappa').onclick      = goMappa;
+document.getElementById('bprofondita').onclick  = goProfondita;
+document.getElementById('bsfera').onclick       = goSfera;
+document.getElementById('bgriglia').onclick     = goGriglia;
+
+// ── FILTRO CATEGORIE ──────────────────────────────────────────────────────────
+const fpanel = document.getElementById('fpanel');
+document.getElementById('bfiltro').onclick = e => {
+  e.stopPropagation();
+  fpanel.classList.toggle('open');
+};
+document.querySelectorAll('.fp-cat').forEach(btn => {
+  btn.onclick = e => {
+    e.stopPropagation();
+    const cat = btn.dataset.cat;
+    if (hiddenCats.has(cat)) {
+      hiddenCats.delete(cat);
+      btn.classList.add('vis');
+    } else {
+      hiddenCats.add(cat);
+      btn.classList.remove('vis');
+    }
+    dirty = true;
+  };
+});
+document.getElementById('fp-all').onclick = e => {
+  e.stopPropagation();
+  hiddenCats.clear();
+  document.querySelectorAll('.fp-cat').forEach(b => b.classList.add('vis'));
+  dirty = true;
+};
+document.addEventListener('click', () => fpanel.classList.remove('open'));
+
+// ── HIT TEST ─────────────────────────────────────────────────────────────────
+function hitAt(mx, my) {
+  if (grigliaT > 0.5) return hitAtGrid(mx, my);
+  // controlla dal primo piano allo sfondo (wz crescente)
+  const sorted = items.filter(it => it.visible).sort((a, b) => getWz(a) - getWz(b));
+  for (const it of sorted) {
+    const { sx, sy, depth } = project(it);
+    const { sw, sh } = itemDims(it);
+    const iw = sw * sc * depth;
+    const ih = sh * sc * depth;
+    if (iw < 2) continue;
+    if (mx >= sx - iw/2 && mx < sx + iw/2 && my >= sy - ih/2 && my < sy + ih/2) return it;
+  }
+  return null;
+}
+function hitAtGrid(mx, my) {
+  for (const it of items) {
+    if (!it.visible) continue;
+    const gx = it.mx3 * sc + tx;
+    const gy = it.my3 * sc + ty;
+    const { sw, sh } = itemDims(it);
+    const iw = sw * sc, ih = sh * sc;
+    if (iw < 2) continue;
+    if (mx >= gx - iw/2 && mx < gx + iw/2 && my >= gy - ih/2 && my < gy + ih/2) return it;
+  }
+  return null;
+}
+
+function hitAtSphere(mx, my) {
+  const R = Math.min(VW, VH) * 0.42 * sphZoom;
+  const CAM = R * SPHERE_CAM_MUL;
+  const cosX = Math.cos(sphRotX), sinX = Math.sin(sphRotX);
+  const cosY = Math.cos(sphRotY), sinY = Math.sin(sphRotY);
+  let best = null, bestZ = Infinity;
+  for (const it of items) {
+    if (!it.visible) continue;
+    const x1 = it.spX * cosY + it.spZ * sinY;
+    const z1 = -it.spX * sinY + it.spZ * cosY;
+    const y2 = it.spY * cosX - z1 * sinX;
+    const z2 = it.spY * sinX + z1 * cosX;
+    if (z2 > 0.6) continue;
+    const depth = CAM / (CAM + z2 * R);
+    const sx = VW / 2 + x1 * R * depth;
+    const sy = VH / 2 + y2 * R * depth;
+    const { sw, sh } = itemDims(it);
+    const f = SPHERE_ITEM_F * R * depth;
+    const iw = sw * f / it.s;
+    const ih = sh * f / it.s;
+    if (mx >= sx - iw / 2 && mx < sx + iw / 2 && my >= sy - ih / 2 && my < sy + ih / 2) {
+      if (z2 < bestZ) { bestZ = z2; best = it; }
+    }
+  }
+  return best;
+}
+
+// ── DRAG ─────────────────────────────────────────────────────────────────────
+cv.addEventListener('mousedown', e => {
+  drg = true; moved = false;
+  x0 = e.clientX; y0 = e.clientY; tx0 = tx; ty0 = ty;
+  sphRotX0 = sphRotX; sphRotY0 = sphRotY;
+  vx = 0; vy = 0; sphRotVX = 0; sphRotVY = 0;
+  lastPX = e.clientX; lastPY = e.clientY; lastPT = performance.now();
+  cv.classList.add('drag');
+});
+window.addEventListener('mousemove', e => {
+  mouseX = e.clientX; mouseY = e.clientY;
+  if (drg) {
+    if (sphereMode) {
+      const dx = e.clientX - x0, dy = e.clientY - y0;
+      moved = true;
+      sphRotY = sphRotY0 + dx * 0.006;
+      sphRotX = sphRotX0 + dy * 0.006;
+      tip.style.display = 'none';
+      const now = performance.now(), dt = now - lastPT;
+      if (dt > 0 && dt < 80) {
+        sphRotVY = (e.clientX - lastPX) / dt * 0.05;
+        sphRotVX = (e.clientY - lastPY) / dt * 0.05;
+      }
+      lastPX = e.clientX; lastPY = e.clientY; lastPT = now;
+      dirty = true;
+    } else {
+      const dx = e.clientX - x0, dy = e.clientY - y0;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+        moved = true; tx = tx0 + dx; ty = ty0 + dy;
+        dirty = true;
+        tip.style.display = 'none';
+        const now = performance.now(), dt = now - lastPT;
+        if (dt > 0 && dt < 80) {
+          vx = (e.clientX - lastPX) / dt * 14;
+          vy = (e.clientY - lastPY) / dt * 14;
+        }
+        lastPX = e.clientX; lastPY = e.clientY; lastPT = now;
+      }
+    }
+  } else {
+    mouseStale = true;
+  }
+});
+window.addEventListener('mouseup', e => {
+  if (!drg) return;
+  drg = false; cv.classList.remove('drag');
+  if (!moved) {
+    const h = sphereMode ? hitAtSphere(e.clientX, e.clientY) : hitAt(e.clientX, e.clientY);
+    if (h) openLB(h.idx);
+  }
+});
+cv.addEventListener('mouseleave', () => {
+  tip.style.display = 'none';
+  if (hover) { hover = null; dirty = true; }
+});
+
+// ── TOUCH ─────────────────────────────────────────────────────────────────────
+cv.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) {
+    drg = true; moved = false;
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; tx0 = tx; ty0 = ty; pd = null;
+  } else if (e.touches.length === 2) {
+    drg = false;
+    pd = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+  }
+}, { passive: true });
+cv.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (e.touches.length === 1 && drg) {
+    const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
+    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) { moved = true; tx = tx0 + dx; ty = ty0 + dy; clampPan(); dirty = true; }
+  } else if (e.touches.length === 2 && pd !== null) {
+    const d  = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+    const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    setZoom(d / pd, cx, cy); pd = d;
+  }
+}, { passive: false });
+cv.addEventListener('touchend', e => {
+  if (drg && !moved) { const t = e.changedTouches[0]; const h = hitAt(t.clientX, t.clientY); if (h) openLB(h.idx); }
+  drg = false; pd = null;
+});
+
+// ── LIGHTBOX ──────────────────────────────────────────────────────────────────
+function openLB(idx) { dIdx = idx; dItems = [...items].sort((a, b) => a.mx - b.mx); showLB(idx); }
+function showLB(idx) {
+  const it = items[idx];
+  if (!it) return;
+  document.getElementById('li').src = it.url;
+  document.getElementById('li').alt = it.title;
+  document.getElementById('lt').textContent = it.title;
+  document.getElementById('ls').style.background = it.hex;
+  document.getElementById('lm').textContent = [CATS[it.cat] || it.cat, it.year || '—'].join('\n');
+  const pos = dItems.findIndex(d => d.idx === idx);
+  document.getElementById('lc').textContent = `${pos + 1} / ${dItems.length}`;
+  document.getElementById('lp').style.opacity = pos > 0 ? '1' : '0.15';
+  document.getElementById('ln').style.opacity = pos < dItems.length - 1 ? '1' : '0.15';
+  document.getElementById('lb').classList.add('open');
+}
+function closeLB() { document.getElementById('lb').classList.remove('open'); }
+function nav(d) {
+  const pos = dItems.findIndex(i => i.idx === dIdx);
+  const nxt = dItems[pos + d];
+  if (nxt) { dIdx = nxt.idx; showLB(nxt.idx); }
+}
+document.getElementById('lx').onclick = closeLB;
+document.getElementById('lp').onclick = e => { e.stopPropagation(); nav(-1); };
+document.getElementById('ln').onclick = e => { e.stopPropagation(); nav(+1); };
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lb').classList.contains('open')) return;
+  if (e.key === 'Escape')     closeLB();
+  if (e.key === 'ArrowLeft')  nav(-1);
+  if (e.key === 'ArrowRight') nav(+1);
+});
+
+// ── LISTA ─────────────────────────────────────────────────────────────────────
+let lvPinned = null;
+
+function buildListView() {
+  const listEl = document.getElementById('lv-list');
+  const img    = document.getElementById('lv-img');
+  const cap    = document.getElementById('lv-cap');
+  listEl.innerHTML = '';
+  lvPinned = null;
+  img.classList.remove('vis');
+  img.src = '';
+
+  const sorted = [...items].sort((a, b) => {
+    if (!a.year && !b.year) return 0;
+    if (!a.year) return 1; if (!b.year) return -1;
+    return a.year - b.year;
+  });
+
+  function showItem(it, full) {
+    img.classList.remove('vis');
+    img.onload = () => img.classList.add('vis');
+    img.onerror = () => {};
+    img.src = full ? it.url : it.thumbSrc;
+    cap.textContent = [it.year || '—', CATS[it.cat] || it.cat, it.title].join('  ·  ');
+  }
+
+  sorted.forEach(it => {
+    const row = document.createElement('div');
+    row.className = 'lvr';
+    row.innerHTML =
+      `<span class="lvy">${it.year || '—'}</span>` +
+      `<span class="lvt">${it.title}</span>` +
+      `<span class="lvc">${CATS[it.cat] || it.cat}</span>`;
+
+    row.addEventListener('click', () => {
+      if (lvPinned === it) {
+        lvPinned = null;
+        row.classList.remove('pin');
+      } else {
+        document.querySelectorAll('.lvr.pin').forEach(r => r.classList.remove('pin'));
+        lvPinned = it;
+        row.classList.add('pin');
+        showItem(it, true);
+      }
+    });
+
+    listEl.appendChild(row);
+  });
+}
+
+function goLista() {
+  const lv = document.getElementById('lv');
+  if (lv.classList.contains('open')) return;
+  document.getElementById('gv').classList.remove('open');
+  sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
+  dirty = true;
+  lv.classList.add('open');
+  setActiveMode('blist');
+  if (items.length) buildListView();
+}
+function goAbout() {
+  const ab = document.getElementById('about');
+  if (ab.classList.contains('open')) { ab.classList.remove('open'); setActiveMode(null); return; }
+  closeList();
+  ab.classList.add('open');
+  setActiveMode('babout');
+}
+document.getElementById('babout').onclick = goAbout;
+document.getElementById('blist').onclick = goLista;
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+async function init() {
+  const data = await (await fetch('data.json')).json();
+  const raw  = (data.items || []).filter(d => !d.error);
+
+  window._thumbHashes = {};
+  raw.forEach(d => { if (d.thumbHash) window._thumbHashes[d.rel_path] = d.thumbHash; });
+  items = raw.map((it, i) => {
+    const yr = extractYear(it.rel_path);
+    const c  = getCat(it.rel_path);
+    const t  = getTitle(it.rel_path);
+    const s  = getSize(c, t);
+    const posYr = yr ? Math.max(MNY, Math.min(MXY, yr))
+                     : Math.max(MNY, Math.min(MXY, extractPosYear(it.rel_path, 8)));
+    const bx = toX(posYr);
+    const by = toY(it.hue || 0);
+    const jx = dj(it.rel_path, 0, 320);
+    const jy = dj(it.rel_path, 1, 420);
+    const yrC = yr ? Math.max(MNY, Math.min(MXY, yr)) : null;
+    const wz0 = dj(it.rel_path, 4, 700);
+    const wz1 = yrC ? ((MXY - yrC) / (MXY - MNY)) * 2400 - 1200 : 0;
+    const mx1 = CW / 2 + dj(it.rel_path, 5, 2500);
+    const my1 = CH / 2 + dj(it.rel_path, 6, 2000);
+    return { ...it, idx: i, year: yr, posYr, cat: c, title: t, s,
+      bx, by, jx, jy, mx: bx + jx, my: by + jy,
+      wz0, wz1, mx1, my1,
+      bm: null, fullBm: null, fullLoading: false, visible: false, alpha: 0, fa: 1,
+      thumbSrc: thumbUrl(it.rel_path), url: imgUrl(it.rel_path) };
+  });
+
+  // coordinate sfera — reticolo di Fibonacci per distribuzione uniforme
+  {
+    const n = items.length;
+    const golden = Math.PI * (3 - Math.sqrt(5));
+    items.forEach((it, i) => {
+      const y = 1 - (i / (n - 1)) * 2;
+      const r = Math.sqrt(Math.max(0, 1 - y * y));
+      const theta = golden * i;
+      it.spX = r * Math.cos(theta);
+      it.spY = y;
+      it.spZ = r * Math.sin(theta);
+    });
+  }
+
+  // posizioni griglia: colonne=anni, righe=categorie, item ordinati dentro la cella
+  {
+    const cells = {};
+    items.forEach(it => {
+      const k = `${it.year || it.posYr}_${catOrder.indexOf(it.cat)}`;
+      (cells[k] = cells[k] || []).push(it);
+    });
+    items.forEach(it => {
+      const ci = catOrder.indexOf(it.cat);
+      const cx = it.bx; // usa posizione già calcolata (anno esatto o random)
+      const cy = PY + (ci < 0 ? catOrder.length - 0.5 : ci + 0.5) * GRID_ROW_H;
+      const group = cells[`${it.year || it.posYr}_${ci}`] || [];
+      const n = group.length, idx = group.indexOf(it);
+      const cols = Math.max(1, Math.ceil(Math.sqrt(n)));
+      const sp = Math.min(it.s * 1.1, 170);
+      it.mx3 = cx + (idx % cols - (cols - 1) / 2) * sp;
+      it.my3 = cy + (Math.floor(idx / cols) - (Math.ceil(n / cols) - 1) / 2) * sp;
+    });
+  }
+
+  const yrs = items.map(d => d.year).filter(y => y && y >= MNY && y <= MXY);
+  document.getElementById('hmeta').textContent =
+    `${items.length} immagini  ·  ${Math.min(...yrs)}–${Math.max(...yrs)}`;
+
+  // centroidi per le due modalità
+  centX0 = items.reduce((s, it) => s + it.mx,  0) / items.length;
+  centY0 = items.reduce((s, it) => s + it.my,  0) / items.length;
+  centX1 = CW / 2;
+  centY1 = items.reduce((s, it) => s + it.my1, 0) / items.length;
+  centX = centX0; centY = centY0;
+  fitAll();
+
+  // mappa parte a 0% (zoom minimo, tutto visibile)
+  sc = SC_MIN; tx = floorTx; ty = floorTy;
+  canvasZoomTarget = sc; canvasPivotX = VW / 2; canvasPivotY = VH / 2;
+  zt.textContent = '0%';
+
+  // calcola posizione iniziale profondità (14%)
+  {
+    let px0=Infinity, px1=-Infinity, py0=Infinity, py1=-Infinity;
+    for (const it of items) {
+      const { sw, sh } = itemDims(it);
+      px0=Math.min(px0,it.mx1-sw/2); px1=Math.max(px1,it.mx1+sw/2);
+      py0=Math.min(py0,it.my1-sh/2); py1=Math.max(py1,it.my1+sh/2);
+    }
+    const psp = mode1InitSc / SC_MIN;
+    const prx0=centX1*(1-psp)+px0*psp, prx1=centX1*(1-psp)+px1*psp;
+    const pry0=centY1*(1-psp)+py0*psp, pry1=centY1*(1-psp)+py1*psp;
+    mode1InitTx = (VW-(prx1-prx0)*mode1InitSc)/2 - prx0*mode1InitSc;
+    mode1InitTy = (VH-(pry1-pry0)*mode1InitSc)/2 - pry0*mode1InitSc;
+  }
+
+  setActiveMode('bmappa');
+
+  // rendi tutti gli item visibili subito (alpha=0, faderanno in dopo l'intro)
+  items.forEach(it => { it.visible = true; });
+
+  // carica le thumbnail subito (in background)
+  loadQueue = [...items].sort((a, b) => {
+    if (!a.year && !b.year) return 0;
+    if (!a.year) return 1;
+    if (!b.year) return -1;
+    return a.year - b.year;
+  });
+  processQueue();
+
+}
+
+init().catch(err => {
+  document.getElementById('ov').textContent = 'Errore: ' + err.message;
+  console.error(err);
+});
+</script>
+</body>
+</html>
