@@ -183,35 +183,57 @@
     }
     .fp-all:hover { color: #333; }
 
+    /* ── MOBILE NAV BAR (nascosta su desktop) ───────────────── */
+    #mnav { display: none; }
+
     /* ── MOBILE ─────────────────────────────────────────────── */
     @media (max-width: 768px) {
+      /* top HUD: solo logo + filtro + about */
       .tl { left: 14px; }
       .logo-img { height: 18px; }
-      /* nav scrollabile orizzontalmente */
-      .tr {
-        overflow-x: auto; -webkit-overflow-scrolling: touch;
-        scrollbar-width: none; max-width: calc(100vw - 120px);
-      }
-      .tr::-webkit-scrollbar { display: none; }
-      .hb { padding: 0 8px; font-size: 8px; }
-      .tr-sep { margin: 0 2px; }
-      .zt { min-width: 24px; font-size: 7.5px; display: none; }
+      .tr .hb:not(#bfiltro):not(#babout) { display: none; }
+      .tr .tr-sep { display: none; }
+      .tr { overflow: visible; max-width: unset; padding-right: 10px; }
 
-      /* lista: colonna unica */
-      #lv { flex-direction: column; }
+      /* bottom nav */
+      #mnav {
+        display: flex;
+        position: fixed; bottom: 0; left: 0; right: 0; height: 58px;
+        background: rgba(245,245,243,0.97);
+        border-top: 1px solid rgba(0,0,0,0.07);
+        z-index: 49; align-items: stretch;
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      }
+      .mnb {
+        flex: 1; display: flex; align-items: center; justify-content: center;
+        font-family: inherit; font-size: 7.5px; letter-spacing: 0.14em;
+        text-transform: uppercase; color: rgba(0,0,0,0.28);
+        background: none; border: none; cursor: pointer; transition: color 0.1s;
+        white-space: nowrap;
+      }
+      .mnb.active { color: #111; font-weight: 500; }
+      .mnb + .mnb { border-left: 1px solid rgba(0,0,0,0.05); }
+
+      /* overlays sopra la nav bar */
+      #lv { bottom: 58px; top: 54px; z-index: 50; flex-direction: column; }
+      #gv { bottom: 58px; top: 54px; z-index: 50; }
+      #about { z-index: 55; }
+      #fpanel { bottom: 58px; top: auto; right: 0; left: 0; min-width: unset; }
+
+      /* lista: lista sopra, preview sotto */
       #lv-list {
-        width: 100%; height: 42vh; max-height: 42vh;
+        width: 100%; height: 46%; flex-shrink: 0;
         border-right: none; border-bottom: 1px solid rgba(0,0,0,0.07);
         overflow-y: auto;
       }
-      #lv-prev { padding: 18px 20px; }
-      #lv-img { max-height: 38vh; }
+      #lv-prev { padding: 16px 20px; flex: 1; min-height: 0; }
+      #lv-img { max-height: 100%; }
 
       /* lightbox */
       .lb-bar { padding: 0 14px; height: 48px; }
       .lb-mid { padding: 10px 36px; }
       .lb-arr { padding: 12px 10px; font-size: 10px; }
-      .lb-bot { flex-direction: column; gap: 8px; padding: 12px 14px 18px; }
+      .lb-bot { flex-direction: column; gap: 8px; padding: 12px 14px 20px; }
       #lt { font-size: 11px; max-width: 100%; }
       .lb-r { justify-content: flex-start; }
 
@@ -221,9 +243,6 @@
 
       /* tooltip: nascosto su touch */
       #tip { display: none !important; }
-
-      /* filtro: full width */
-      #fpanel { right: 0; left: 0; min-width: unset; }
     }
   </style>
 </head>
@@ -250,6 +269,14 @@
     <div class="tr-sep"></div>
     <button class="hb" id="babout">About</button>
   </div>
+</div>
+
+<div id="mnav">
+  <button class="mnb" id="mb-mappa">Mappa</button>
+  <button class="mnb" id="mb-fuga">Fuga</button>
+  <button class="mnb" id="mb-sfera">Sfera</button>
+  <button class="mnb" id="mb-lista">Lista</button>
+  <button class="mnb" id="mb-griglia">Griglia</button>
 </div>
 
 <div id="fpanel">
@@ -444,12 +471,13 @@ let sphRotX0 = 0, sphRotY0 = 0;
 const cv  = document.getElementById('c');
 const ctx = cv.getContext('2d', { alpha: false });
 const tip = document.getElementById('tip');
-let DPR = 1, VW = 0, VH = 0;
+let DPR = 1, VW = 0, VH = 0, mobileNavH = 0;
 
 function resize() {
   DPR = window.devicePixelRatio || 1;
   VW  = window.innerWidth;
   VH  = window.innerHeight;
+  mobileNavH = VW < 768 ? 58 : 0;
   cv.width  = VW * DPR;
   cv.height = VH * DPR;
   cv.style.width  = VW + 'px';
@@ -696,19 +724,20 @@ function render() {
     ctx.font = '600 11px \'NHG\',\'Helvetica Neue\',Arial';
     ctx.textBaseline = 'bottom';
     ctx.textAlign = 'center';
-    const barY = VH - 10;
+    const barBot = VH - mobileNavH;
+    const barY = barBot - 10;
     ctx.fillStyle = 'rgba(245,245,243,0.92)';
-    ctx.fillRect(0, VH - 28, VW, 28);
+    ctx.fillRect(0, barBot - 28, VW, 28);
     ctx.strokeStyle = 'rgba(0,0,0,0.15)';
     ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(0, VH - 28); ctx.lineTo(VW, VH - 28); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, barBot - 28); ctx.lineTo(VW, barBot - 28); ctx.stroke();
     for (let y = 1960; y <= 2000; y += 5) {
       const rawX = toX(y) * sc + tx;
       const onScreen = rawX >= 0 && rawX <= VW;
       const sx = Math.max(22, Math.min(VW - 22, rawX));
       ctx.strokeStyle = onScreen ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)';
       ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(sx, VH - 28); ctx.lineTo(sx, VH - 22); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx, barBot - 28); ctx.lineTo(sx, barBot - 22); ctx.stroke();
       ctx.fillStyle = onScreen ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.25)';
       ctx.fillText(y, sx, barY);
     }
@@ -1165,10 +1194,14 @@ cv.addEventListener('wheel', e => {
   canvasPivotX = e.clientX; canvasPivotY = e.clientY;
   dirty = true;
 }, { passive: false });
+const mobileNavMap = { bmappa:'mb-mappa', bprofondita:'mb-fuga', bsfera:'mb-sfera', blist:'mb-lista', bgriglia:'mb-griglia' };
 function setActiveMode(id) {
   ['blist', 'bmappa', 'bprofondita', 'bsfera', 'bgriglia'].forEach(b =>
     document.getElementById(b).classList.remove('active'));
   if (id) document.getElementById(id).classList.add('active');
+  ['mb-mappa','mb-fuga','mb-sfera','mb-lista','mb-griglia'].forEach(b =>
+    document.getElementById(b).classList.remove('active'));
+  if (id && mobileNavMap[id]) document.getElementById(mobileNavMap[id]).classList.add('active');
 }
 
 function closeList() {
@@ -1259,6 +1292,13 @@ document.getElementById('bmappa').onclick      = goMappa;
 document.getElementById('bprofondita').onclick  = goProfondita;
 document.getElementById('bsfera').onclick       = goSfera;
 document.getElementById('bgriglia').onclick     = goGriglia;
+
+// mobile bottom nav
+document.getElementById('mb-mappa').onclick   = goMappa;
+document.getElementById('mb-fuga').onclick    = goProfondita;
+document.getElementById('mb-sfera').onclick   = goSfera;
+document.getElementById('mb-lista').onclick   = goLista;
+document.getElementById('mb-griglia').onclick = goGriglia;
 
 // ── FILTRO CATEGORIE ──────────────────────────────────────────────────────────
 const fpanel = document.getElementById('fpanel');
