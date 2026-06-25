@@ -1613,7 +1613,7 @@ async function init() {
     const jy = dj(it.rel_path, 1, 420);
     const yrC = yr ? Math.max(MNY, Math.min(MXY, yr)) : null;
     const wz0 = dj(it.rel_path, 4, 700);
-    const wz1 = yrC ? ((MXY - yrC) / (MXY - MNY)) * 2400 - 1200 : 0;
+    const wz1 = yrC ? ((yrC - MNY) / (MXY - MNY)) * 2400 - 1200 : 0;
     const mx1 = CW / 2 + dj(it.rel_path, 5, 2500);
     const my1 = CH / 2 + dj(it.rel_path, 6, 2000);
     return { ...it, idx: i, year: yr, posYr, cat: c, title: t, s,
