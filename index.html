@@ -21,7 +21,6 @@
       position: fixed; top: 0; left: 0; right: 0; height: 54px;
       background: none; border-bottom: none;
       pointer-events: none; z-index: 50;
-      mix-blend-mode: difference;
     }
 
     /* identity — sinistra */
@@ -32,17 +31,16 @@
     }
     .logo-img {
       height: 24px; width: auto; display: block;
-      filter: invert(1);
     }
     .meta {
       font-size: 8px; font-weight: 400;
       letter-spacing: 0.12em; text-transform: uppercase;
-      color: rgba(255,255,255,0.55); line-height: 1;
+      color: rgba(0,0,0,0.45); line-height: 1;
     }
     #hview-desc {
       font-size: 7px; font-weight: 400;
       letter-spacing: 0.10em; text-transform: uppercase;
-      color: rgba(255,255,255,0.32); line-height: 1;
+      color: rgba(0,0,0,0.28); line-height: 1;
       transition: opacity 0.2s;
     }
 
@@ -56,25 +54,25 @@
     .hb {
       font-family: inherit; font-size: 9px; font-weight: 400;
       letter-spacing: 0.18em; text-transform: uppercase;
-      color: rgba(255,255,255,0.45); background: none; border: none;
+      color: rgba(0,0,0,0.35); background: none; border: none;
       padding: 0 11px; height: 54px;
       display: flex; align-items: center;
       cursor: pointer; transition: color 0.12s;
       white-space: nowrap; user-select: none;
     }
-    .hb:hover  { color: #fff; }
-    .hb.active { color: #fff; font-weight: 600; }
+    .hb:hover  { color: #111; }
+    .hb.active { color: #111; font-weight: 600; }
 
     /* separatori verticali tra gruppi */
     .tr-sep {
       width: 1px; height: 14px;
-      background: rgba(255,255,255,0.25);
+      background: rgba(0,0,0,0.15);
       flex-shrink: 0; margin: 0 4px;
     }
 
     /* zoom: − 10% + */
     .zt {
-      font-size: 8.5px; color: rgba(255,255,255,0.45);
+      font-size: 8.5px; color: rgba(0,0,0,0.35);
       letter-spacing: 0.04em; min-width: 34px;
       text-align: center; user-select: none;
     }
