@@ -39,6 +39,12 @@
       letter-spacing: 0.12em; text-transform: uppercase;
       color: rgba(255,255,255,0.55); line-height: 1;
     }
+    #hview-desc {
+      font-size: 7px; font-weight: 400;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      color: rgba(255,255,255,0.32); line-height: 1;
+      transition: opacity 0.2s;
+    }
 
     /* nav — destra */
     .tr {
@@ -255,6 +261,7 @@
   <div class="tl">
     <img src="logo.svg" alt="Romanese" class="logo-img">
     <div class="meta" id="hmeta"></div>
+    <div id="hview-desc"></div>
   </div>
   <div class="tr">
     <button class="hb" id="blist">Lista</button>
@@ -433,7 +440,7 @@ let items = [], tx = 0, ty = 0, sc = 0.1;
 let fitSc = 0, fitTx = 0, fitTy = 0;
 let floorTx = 0, floorTy = 0;
 let grigliaFloorTx = 0, grigliaFloorTy = 0;
-let mode1InitSc = 0.14, mode1InitTx = 0, mode1InitTy = 0;
+let mode1InitSc = 0.18, mode1InitTx = 0, mode1InitTy = 0;
 let centX = 0, centY = 0;           // centroide corrente (lerp tra i due modi)
 let centX0 = 0, centY0 = 0;         // centroide modo 0 (mappa XY)
 let centX1 = 0, centY1 = 0;         // centroide modo 1 (tunnel temporale)
@@ -1196,6 +1203,13 @@ cv.addEventListener('wheel', e => {
   dirty = true;
 }, { passive: false });
 const mobileNavMap = { bmappa:'mb-mappa', bprofondita:'mb-fuga', bsfera:'mb-sfera', blist:'mb-lista', bgriglia:'mb-griglia' };
+const viewDesc = {
+  bmappa:      'Distribuzione per anno e tono cromatico',
+  bprofondita: 'Profondità temporale — 1968 in primo piano',
+  bsfera:      'Archivio in forma sferica',
+  bgriglia:    'Indice cronologico completo',
+  blist:       'Elenco dei documenti',
+};
 function setActiveMode(id) {
   ['blist', 'bmappa', 'bprofondita', 'bsfera', 'bgriglia'].forEach(b =>
     document.getElementById(b).classList.remove('active'));
@@ -1203,6 +1217,8 @@ function setActiveMode(id) {
   ['mb-mappa','mb-fuga','mb-sfera','mb-lista','mb-griglia'].forEach(b =>
     document.getElementById(b).classList.remove('active'));
   if (id && mobileNavMap[id]) document.getElementById(mobileNavMap[id]).classList.add('active');
+  const desc = document.getElementById('hview-desc');
+  if (desc) desc.textContent = (id && viewDesc[id]) ? viewDesc[id] : '';
 }
 
 function closeList() {
