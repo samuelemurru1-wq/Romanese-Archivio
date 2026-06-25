@@ -193,6 +193,7 @@
       .logo-img { height: 18px; }
       .tr .hb:not(#bfiltro):not(#babout) { display: none; }
       .tr .tr-sep { display: none; }
+      .tr .zt { display: none; }
       .tr { overflow: visible; max-width: unset; padding-right: 10px; }
 
       /* bottom nav */
@@ -1688,12 +1689,20 @@ async function init() {
     mode1InitTy = (VH-(pry1-pry0)*mode1InitSc)/2 - pry0*mode1InitSc;
   }
 
-  setActiveMode('bmappa');
+  // mobile: salta intro, apre griglia subito (lazy-load per immagine)
+  if (VW < 768) {
+    introStarted = true;
+    items.forEach(it => { it.visible = true; it.alpha = 1; });
+    document.getElementById('prog').style.opacity = '0';
+    const ov2 = document.getElementById('ov');
+    ov2.style.opacity = '0';
+    setTimeout(() => { ov2.style.display = 'none'; goGriglia(); }, 150);
+  } else {
+    setActiveMode('bmappa');
+    items.forEach(it => { it.visible = true; });
+  }
 
-  // rendi tutti gli item visibili subito (alpha=0, faderanno in dopo l'intro)
-  items.forEach(it => { it.visible = true; });
-
-  // carica le thumbnail subito (in background)
+  // carica le thumbnail in background
   loadQueue = [...items].sort((a, b) => {
     if (!a.year && !b.year) return 0;
     if (!a.year) return 1;
