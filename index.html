@@ -524,8 +524,7 @@ resize();
 // ── CODA CARICAMENTO ─────────────────────────────────────────────────────────
 function mkBitmap(img) {
   if (typeof createImageBitmap === 'undefined') return Promise.resolve(img);
-  return createImageBitmap(img, { imageOrientation: 'from-image' })
-    .catch(() => createImageBitmap(img).catch(() => img));
+  return createImageBitmap(img).catch(() => img);
 }
 
 const CONCURRENCY = 8;
