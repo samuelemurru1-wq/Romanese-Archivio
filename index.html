@@ -148,9 +148,9 @@
     .gv-cat  { display: block; font-size: 7px; letter-spacing: 0.13em; text-transform: uppercase; color: #ccc; margin-top: 1px; }
 
     /* ── ABOUT ──────────────────────────────────────────────── */
-    #about { display: none; position: fixed; inset: 0; z-index: 46; background: rgba(0,0,0,0.18); align-items: center; justify-content: center; }
+    #about { display: none; position: fixed; inset: 0; z-index: 46; background: rgba(0,0,0,0.28); align-items: center; justify-content: center; }
     #about.open { display: flex; }
-    .about-panel { background: rgba(245,245,243,0.60); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.35); max-width: 520px; width: calc(100% - 48px); padding: 48px; position: relative; }
+    .about-panel { background: rgba(245,245,243,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,0.5); max-width: 520px; width: calc(100% - 48px); padding: 48px; position: relative; }
     .about-label { display: block; font-size: 8px; letter-spacing: 0.22em; text-transform: uppercase; color: #bbb; margin-bottom: 28px; }
     .about-inner p { font-size: 15px; line-height: 1.85; color: #222; margin-bottom: 1.5em; }
     .about-inner p:last-child { margin-bottom: 0; }
@@ -1112,15 +1112,21 @@ function tick() {
   }
   if (mouseStale && !drg) {
     mouseStale = false;
-    const h = sphereMode ? hitAtSphere(mouseX, mouseY) : hitAt(mouseX, mouseY);
-    if (h !== hover) { hover = h; cv.className = h ? 'ptr' : ''; dirty = true; }
-    if (h) {
-      tip.textContent = h.title + (h.year ? '  ·  ' + h.year : '');
-      tip.style.display = 'block';
-      tip.style.left = (mouseX + 14) + 'px';
-      tip.style.top  = (mouseY +  8) + 'px';
-    } else {
+    const anyPanelOpen = ['about','lv','gv'].some(id => document.getElementById(id).classList.contains('open'));
+    if (anyPanelOpen) {
+      if (hover) { hover = null; cv.className = ''; dirty = true; }
       tip.style.display = 'none';
+    } else {
+      const h = sphereMode ? hitAtSphere(mouseX, mouseY) : hitAt(mouseX, mouseY);
+      if (h !== hover) { hover = h; cv.className = h ? 'ptr' : ''; dirty = true; }
+      if (h) {
+        tip.textContent = h.title + (h.year ? '  ·  ' + h.year : '');
+        tip.style.display = 'block';
+        tip.style.left = (mouseX + 14) + 'px';
+        tip.style.top  = (mouseY +  8) + 'px';
+      } else {
+        tip.style.display = 'none';
+      }
     }
   }
   if (dirty) { render(); dirty = false; }
