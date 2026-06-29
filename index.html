@@ -117,14 +117,14 @@
     /* ── LISTA VIEW ─────────────────────────────────────────── */
     #lv { display: none; position: fixed; top: 64px; left: 0; right: 0; bottom: 0; z-index: 45; background: #f5f5f3; }
     #lv.open { display: flex; }
-    #lv-list { width: 320px; overflow-y: auto; flex-shrink: 0; border-right: 1px solid rgba(0,0,0,0.07); }
+    #lv-list { width: 260px; overflow-y: auto; flex-shrink: 0; border-right: 1px solid rgba(0,0,0,0.07); }
     .lvr { display: flex; align-items: baseline; gap: 14px; padding: 9px 22px; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.04); transition: background .06s; user-select: none; }
     .lvr:hover, .lvr.pin { background: rgba(0,0,0,0.03); }
     .lvy { font-size: 8px; color: #bbb; letter-spacing: 0.06em; width: 30px; flex-shrink: 0; }
     .lvt { font-size: 10px; color: #111; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lvc { font-size: 8px; color: #bbb; letter-spacing: 0.04em; text-transform: uppercase; flex-shrink: 0; }
-    #lv-prev { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 64px; gap: 16px; min-width: 0; }
-    #lv-img { max-width: 100%; max-height: calc(100% - 48px); object-fit: contain; opacity: 0; transition: opacity .2s; display: block; }
+    #lv-prev { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 32px; gap: 12px; min-width: 0; }
+    #lv-img { max-width: 100%; max-height: calc(100% - 32px); object-fit: contain; opacity: 0; transition: opacity .2s; display: block; }
     #lv-img.vis { opacity: 1; }
     #lv-cap { font-size: 8px; color: #aaa; letter-spacing: 0.1em; text-align: center; text-transform: uppercase; }
 
@@ -1692,11 +1692,11 @@ function buildListView() {
     return a.year - b.year;
   });
 
-  function showItem(it, full) {
+  function showItem(it) {
     img.classList.remove('vis');
     img.onload = () => img.classList.add('vis');
     img.onerror = () => {};
-    img.src = full ? it.url : it.thumbSrc;
+    img.src = it.url;
     cap.textContent = [it.year || '—', CATS[it.cat] || it.cat, it.title].join('  ·  ');
   }
 
@@ -1709,7 +1709,7 @@ function buildListView() {
       `<span class="lvc">${CATS[it.cat] || it.cat}</span>`;
 
     row.addEventListener('mouseenter', () => {
-      if (!lvPinned) showItem(it, false);
+      if (!lvPinned) showItem(it);
     });
 
     row.addEventListener('click', () => {
@@ -1717,12 +1717,12 @@ function buildListView() {
       if (lvPinned === it) {
         lvPinned = null;
         row.classList.remove('pin');
-        showItem(it, false);
+        showItem(it);
       } else {
         document.querySelectorAll('.lvr.pin').forEach(r => r.classList.remove('pin'));
         lvPinned = it;
         row.classList.add('pin');
-        showItem(it, true);
+        showItem(it);
       }
     });
 
@@ -1730,7 +1730,7 @@ function buildListView() {
   });
 
   // mostra subito la prima foto all'apertura
-  if (sorted.length) showItem(sorted[0], false);
+  if (sorted.length) showItem(sorted[0]);
 }
 
 function goLista() {
