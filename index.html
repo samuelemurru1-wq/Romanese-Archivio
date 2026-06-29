@@ -94,17 +94,17 @@
     #lb.open { display: block; }
     #lb-overlay { position: absolute; inset: 0; background: transparent; cursor: pointer; }
     #li { position: fixed; object-fit: contain; z-index: 201; cursor: pointer; transform-origin: center center; display: block; }
-    #lx { position: fixed; top: 16px; right: 22px; z-index: 202; font-family: inherit; font-size: 8px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255,255,255,0.5); background: none; border: none; cursor: pointer; transition: color .12s; padding: 6px 0; }
-    #lx:hover { color: #fff; }
-    #lc { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 202; font-size: 8px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.35); white-space: nowrap; }
-    .lb-arr { position: fixed; top: 50%; transform: translateY(-50%); z-index: 202; color: rgba(255,255,255,0.3); background: none; border: none; cursor: pointer; padding: 20px 22px; font-size: 13px; transition: color .12s; user-select: none; }
-    .lb-arr:hover { color: rgba(255,255,255,0.9); }
+    #lx { position: fixed; top: 16px; right: 22px; z-index: 202; font-family: inherit; font-size: 8px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(0,0,0,0.4); background: none; border: none; cursor: pointer; transition: color .12s; padding: 6px 0; }
+    #lx:hover { color: #111; }
+    #lc { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 202; font-size: 8px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(0,0,0,0.3); white-space: nowrap; }
+    .lb-arr { position: fixed; top: 50%; transform: translateY(-50%); z-index: 202; color: rgba(0,0,0,0.25); background: none; border: none; cursor: pointer; padding: 20px 22px; font-size: 13px; transition: color .12s; user-select: none; }
+    .lb-arr:hover { color: rgba(0,0,0,0.8); }
     #lp { left: 0; } #ln { right: 0; }
-    #lb-bot { position: fixed; bottom: 0; left: 0; right: 0; z-index: 202; display: flex; align-items: flex-end; justify-content: space-between; padding: 18px 30px 28px; gap: 40px; pointer-events: none; }
-    #lt { font-size: 12px; color: rgba(255,255,255,0.78); max-width: 500px; line-height: 1.55; }
-    .lb-r { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
-    #lm { font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.35); text-align: right; line-height: 2.1; white-space: pre; }
-    #ls { width: 20px; height: 20px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.18); flex-shrink: 0; }
+    #lb-info { position: fixed; z-index: 202; background: rgba(238,238,238,0.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 4px; padding: 16px 20px; pointer-events: none; opacity: 0; transition: opacity 0.28s ease 0.2s; }
+    #lb-info.vis { opacity: 1; }
+    #lt { font-size: 12px; color: #111; line-height: 1.5; margin: 0 0 7px; }
+    #lm { font-size: 8px; letter-spacing: 0.13em; text-transform: uppercase; color: rgba(0,0,0,0.45); line-height: 1.9; white-space: pre; margin: 0; }
+    #ls { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); margin-top: 10px; }
 
     /* ── OVERLAY ────────────────────────────────────────────── */
     #ov { position: fixed; inset: 0; background: #f5f5f3; display: flex; align-items: center; justify-content: center; z-index: 300; font-size: 8px; letter-spacing: 0.24em; text-transform: uppercase; color: #bbb; transition: opacity .3s; }
@@ -253,9 +253,8 @@
 
       /* lightbox */
       .lb-arr { padding: 22px 14px; font-size: 11px; }
-      #lb-bot { flex-direction: column; gap: 6px; padding: 10px 14px 22px; }
-      #lt { font-size: 11px; max-width: 100%; }
-      .lb-r { justify-content: flex-start; }
+      #lb-info { padding: 12px 14px; }
+      #lt { font-size: 11px; }
       #lx { top: 12px; right: 14px; }
 
       /* about popup */
@@ -321,9 +320,10 @@
   <span id="lc"></span>
   <button class="lb-arr" id="lp">&#8592;</button>
   <button class="lb-arr" id="ln">&#8594;</button>
-  <div id="lb-bot">
-    <div id="lt"></div>
-    <div class="lb-r"><div id="lm"></div><div id="ls"></div></div>
+  <div id="lb-info">
+    <p id="lt"></p>
+    <p id="lm"></p>
+    <div id="ls"></div>
   </div>
 </div>
 
@@ -1689,15 +1689,25 @@ function showLB(idx, animate) {
   img.alt = it.title;
   document.getElementById('lb').classList.add('open');
 
-  // dimensioni finali centrate
+  // dimensioni finali centrate (riserva spazio per info sotto)
+  const INFO_H = 100;
   const aspect = it.aspect || 1;
-  const maxW = VW * 0.86, maxH = VH * 0.86;
+  const maxW = VW * 0.86, maxH = VH * 0.86 - INFO_H;
   const fw = Math.min(maxW, maxH * aspect);
   const fh = fw / aspect;
+  const imgLeft = (VW - fw) / 2;
+  const imgTop  = (VH - fh - INFO_H) / 2;
   img.style.width  = fw + 'px';
   img.style.height = fh + 'px';
-  img.style.left   = ((VW - fw) / 2) + 'px';
-  img.style.top    = ((VH - fh) / 2) + 'px';
+  img.style.left   = imgLeft + 'px';
+  img.style.top    = imgTop  + 'px';
+
+  // posiziona info panel sotto l'immagine
+  const infoEl = document.getElementById('lb-info');
+  infoEl.classList.remove('vis');
+  infoEl.style.left     = imgLeft + 'px';
+  infoEl.style.top      = (imgTop + fh + 14) + 'px';
+  infoEl.style.maxWidth = fw + 'px';
 
   if (animate && lbOriginRect) {
     const { sx, sy, iw, ih } = lbOriginRect;
@@ -1711,6 +1721,7 @@ function showLB(idx, animate) {
       img.style.transition = 'transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.26s ease';
       img.style.transform  = 'none';
       img.style.opacity    = '1';
+      infoEl.classList.add('vis');
     }));
   } else if (animate) {
     img.style.transition = 'none';
@@ -1720,6 +1731,7 @@ function showLB(idx, animate) {
       img.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.22s ease';
       img.style.transform  = 'none';
       img.style.opacity    = '1';
+      infoEl.classList.add('vis');
     }));
   } else {
     img.style.transition = 'none';
@@ -1728,6 +1740,7 @@ function showLB(idx, animate) {
     requestAnimationFrame(() => {
       img.style.transition = 'opacity 0.16s ease';
       img.style.opacity    = '1';
+      infoEl.classList.add('vis');
     });
   }
 }
@@ -1735,6 +1748,7 @@ function showLB(idx, animate) {
 function closeLB() {
   if (lbClosing) return;
   lbClosing = true;
+  document.getElementById('lb-info').classList.remove('vis');
   const img = document.getElementById('li');
 
   if (lbOriginRect) {
