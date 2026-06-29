@@ -1417,7 +1417,7 @@ function buildGridView() {
 
 function goGriglia() {
   const gv = document.getElementById('gv');
-  if (gv.classList.contains('open')) return;
+  if (gv.classList.contains('open')) { gv.classList.remove('open'); setActiveMode(null); return; }
   document.getElementById('lv').classList.remove('open');
   sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
   dirty = true;
@@ -1721,7 +1721,7 @@ function buildListView() {
 
 function goLista() {
   const lv = document.getElementById('lv');
-  if (lv.classList.contains('open')) return;
+  if (lv.classList.contains('open')) { lv.classList.remove('open'); setActiveMode(null); return; }
   document.getElementById('gv').classList.remove('open');
   sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
   dirty = true;
