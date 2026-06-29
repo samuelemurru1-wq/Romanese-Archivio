@@ -92,6 +92,8 @@
     /* ── LIGHTBOX ───────────────────────────────────────────── */
     #lb { display: none; position: fixed; inset: 0; z-index: 200; }
     #lb.open { display: block; }
+    body.lb-open #hud, body.lb-open #mnav { opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    #hud, #mnav { transition: opacity 0.2s; }
     #lb-overlay { position: absolute; inset: 0; background: transparent; cursor: pointer; }
     #li { position: fixed; object-fit: contain; z-index: 201; cursor: pointer; transform-origin: center center; display: block; }
     #lx { position: fixed; top: 16px; right: 22px; z-index: 202; font-family: inherit; font-size: 8px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(0,0,0,0.4); background: none; border: none; cursor: pointer; transition: color .12s; padding: 6px 0; }
@@ -1688,6 +1690,7 @@ function showLB(idx, animate) {
   img.src = it.url;
   img.alt = it.title;
   document.getElementById('lb').classList.add('open');
+  document.body.classList.add('lb-open');
 
   // dimensioni finali centrate (riserva spazio per info sotto)
   const INFO_H = 100;
@@ -1763,6 +1766,7 @@ function closeLB() {
     img.style.opacity    = '0';
     setTimeout(() => {
       document.getElementById('lb').classList.remove('open');
+      document.body.classList.remove('lb-open');
       img.style.transition = 'none'; img.style.transform = 'none';
       lbOriginRect = null; lbClosing = false;
     }, 340);
@@ -1772,6 +1776,7 @@ function closeLB() {
     img.style.opacity    = '0';
     setTimeout(() => {
       document.getElementById('lb').classList.remove('open');
+      document.body.classList.remove('lb-open');
       img.style.transition = 'none'; img.style.transform = 'none';
       lbClosing = false;
     }, 280);
