@@ -1708,11 +1708,16 @@ function buildListView() {
       `<span class="lvt">${it.title}</span>` +
       `<span class="lvc">${CATS[it.cat] || it.cat}</span>`;
 
+    row.addEventListener('mouseenter', () => {
+      if (!lvPinned) showItem(it, false);
+    });
+
     row.addEventListener('click', () => {
       if (VW < 768) { openLB(it.idx); return; }
       if (lvPinned === it) {
         lvPinned = null;
         row.classList.remove('pin');
+        showItem(it, false);
       } else {
         document.querySelectorAll('.lvr.pin').forEach(r => r.classList.remove('pin'));
         lvPinned = it;
@@ -1723,6 +1728,9 @@ function buildListView() {
 
     listEl.appendChild(row);
   });
+
+  // mostra subito la prima foto all'apertura
+  if (sorted.length) showItem(sorted[0], false);
 }
 
 function goLista() {
