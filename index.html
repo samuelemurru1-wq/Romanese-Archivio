@@ -517,6 +517,12 @@ window.addEventListener('resize', resize);
 resize();
 
 // ── CODA CARICAMENTO ─────────────────────────────────────────────────────────
+function mkBitmap(img) {
+  if (typeof createImageBitmap === 'undefined') return Promise.resolve(img);
+  return createImageBitmap(img, { imageOrientation: 'from-image' })
+    .catch(() => createImageBitmap(img).catch(() => img));
+}
+
 const CONCURRENCY = 8;
 
 function processQueue() {
@@ -526,10 +532,7 @@ function processQueue() {
     const img = new Image();
     img.onload = () => {
       item.aspect = img.naturalWidth / img.naturalHeight;
-      const p = typeof createImageBitmap !== 'undefined'
-        ? createImageBitmap(img).catch(() => img)
-        : Promise.resolve(img);
-      p.then(bm => { item.bm = bm; inFlight--; onLoaded(); processQueue(); });
+      mkBitmap(img).then(bm => { item.bm = bm; inFlight--; onLoaded(); processQueue(); });
     };
     img.onerror = () => { inFlight--; onLoaded(); processQueue(); };
     img.src = item.thumbSrc;
@@ -670,9 +673,7 @@ function renderSphere(masterAlpha = 1) {
       it.fullLoading = true; sphInFlight++;
       const img = new Image();
       img.onload = () => {
-        const p2 = typeof createImageBitmap !== 'undefined'
-          ? createImageBitmap(img).catch(() => img) : Promise.resolve(img);
-        p2.then(bm => { it.fullBm = bm; it.fullLoading = false; sphInFlight--; dirty = true; });
+        mkBitmap(img).then(bm => { it.fullBm = bm; it.fullLoading = false; sphInFlight--; dirty = true; });
       };
       img.onerror = () => { it.fullLoading = false; sphInFlight--; };
       img.src = it.url;
@@ -892,9 +893,7 @@ function render() {
       it.fullLoading = true;
       const img = new Image();
       img.onload = () => {
-        const p2 = typeof createImageBitmap !== 'undefined'
-          ? createImageBitmap(img).catch(() => img) : Promise.resolve(img);
-        p2.then(bm => { it.fullBm = bm; it.fullLoading = false; dirty = true; });
+        mkBitmap(img).then(bm => { it.fullBm = bm; it.fullLoading = false; dirty = true; });
       };
       img.onerror = () => { it.fullLoading = false; };
       img.src = it.url;
@@ -933,9 +932,7 @@ function startIntro() {
     it.fullLoading = true;
     const img = new Image();
     img.onload = () => {
-      const p = typeof createImageBitmap !== 'undefined'
-        ? createImageBitmap(img).catch(() => img) : Promise.resolve(img);
-      p.then(bm => { it.fullBm = bm; it.fullLoading = false; dirty = true; });
+      mkBitmap(img).then(bm => { it.fullBm = bm; it.fullLoading = false; dirty = true; });
     };
     img.onerror = () => { it.fullLoading = false; };
     img.src = it.url;
