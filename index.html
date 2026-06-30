@@ -1324,6 +1324,7 @@ function buildCronoView() {
     cell.onclick = () => openLB(it.idx);
     row.appendChild(cell);
   }
+  const cronoCt = document.getElementById('mob-crono');
   const obs = new IntersectionObserver(entries => {
     for (const e of entries) {
       if (!e.isIntersecting) continue;
@@ -1332,7 +1333,7 @@ function buildCronoView() {
       img.onload = () => img.classList.add('vis');
       obs.unobserve(img);
     }
-  }, { rootMargin: '400px' });
+  }, { root: cronoCt, rootMargin: '600px' });
   el.querySelectorAll('img[data-src]').forEach(img => obs.observe(img));
 }
 
@@ -1345,6 +1346,14 @@ function goMobCrono() {
   sphereMode = false; sphereTarget = 0; dirty = true;
   setActiveMode('bmappa');
   if (items.length) buildCronoView();
+  // fallback: forza caricamento immagini visibili se observer non ha sparato
+  setTimeout(() => {
+    document.getElementById('mob-crono-inner').querySelectorAll('img[data-src]').forEach(img => {
+      img.src = img.dataset.src;
+      img.onload = () => img.classList.add('vis');
+      img.removeAttribute('data-src');
+    });
+  }, 800);
 }
 
 // ── MOBILE: COLORI (Colore) ───────────────────────────────────────────────
@@ -1361,6 +1370,7 @@ function buildColoriView() {
     cell.onclick = () => openLB(it.idx);
     el.appendChild(cell);
   });
+  const coloriCt = document.getElementById('mob-colori');
   const obs = new IntersectionObserver(entries => {
     for (const e of entries) {
       if (!e.isIntersecting) continue;
@@ -1369,7 +1379,7 @@ function buildColoriView() {
       img.onload = () => img.classList.add('vis');
       obs.unobserve(img);
     }
-  }, { rootMargin: '400px' });
+  }, { root: coloriCt, rootMargin: '600px' });
   el.querySelectorAll('img[data-src]').forEach(img => obs.observe(img));
 }
 
@@ -1382,6 +1392,13 @@ function goMobColori() {
   sphereMode = false; sphereTarget = 0; dirty = true;
   setActiveMode('bprofondita');
   if (items.length) buildColoriView();
+  setTimeout(() => {
+    document.getElementById('mob-colori-inner').querySelectorAll('img[data-src]').forEach(img => {
+      img.src = img.dataset.src;
+      img.onload = () => img.classList.add('vis');
+      img.removeAttribute('data-src');
+    });
+  }, 800);
 }
 
 function buildGridView() {
