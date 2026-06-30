@@ -195,6 +195,7 @@
       /* top HUD: solo logo + filtro + about */
       .tl { left: 14px; }
       .logo-img { height: 18px; }
+      #hview-desc { display: none; }
       .tr .hb:not(#bfiltro):not(#babout) { display: none; }
       .tr .tr-sep { display: none; }
       .tr .zt { display: none; }
@@ -325,8 +326,8 @@
 </div>
 
 <div id="mnav">
-  <button class="mnb" id="mb-mappa">Anno</button>
-  <button class="mnb" id="mb-fuga">Colore</button>
+  <button class="mnb" id="mb-mappa">Mappa</button>
+  <button class="mnb" id="mb-fuga">Fuga</button>
   <button class="mnb" id="mb-sfera">Sfera</button>
   <button class="mnb" id="mb-lista">Lista</button>
   <button class="mnb" id="mb-griglia">Griglia</button>
@@ -2030,12 +2031,10 @@ async function init() {
   document.getElementById('hmeta').textContent =
     `${items.length} immagini  ·  ${Math.min(...yrs)}–${Math.max(...yrs)}`;
 
-  // ── MOBILE: SC_MIN aumentato + posizioni Fuga ricaliibrate per portrait ──────
-  // SC_MIN = 0.25 → al floor zoom sp=1 (nessuno spread extra), item ~37px leggibili.
-  // La formula mxR = (schermo/2) × SC_MIN / sc1² garantisce che al modo1InitSc
-  // gli item della Fuga restino entro il viewport (sp = sc1/SC_MIN = 1.2).
+  // ── MOBILE FUGA: ricalibratura posizioni per portrait ────────────────────────
+  // Formula: mxR = (VW/2) × SC_MIN / sc1² — garantisce che al modo1InitSc
+  // gli item siano entro il viewport dato che sp = sc1/SC_MIN.
   if (VW < 768) {
-    SC_MIN = 0.25;
     const sc1 = 0.30;
     const mxR = (VW / 2) * SC_MIN / (sc1 * sc1) * 0.82;
     const myR = ((VH - mobileNavH) / 2) * SC_MIN / (sc1 * sc1) * 0.80;
