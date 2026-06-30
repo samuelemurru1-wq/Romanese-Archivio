@@ -237,13 +237,43 @@
       #lv-prev { display: none; }
 
       /* vista mappa orizzontale (Anno) */
+      /* ── Mappa verticale mobile ──────────────────────────────── */
       #mob-crono {
         position: fixed; top: 54px; left: 0; right: 0;
         bottom: calc(58px + env(safe-area-inset-bottom, 0px));
-        z-index: 45; background: rgba(0,0,0,0.06);
-        overflow-x: auto; overflow-y: hidden;
+        z-index: 45; background: #f5f5f3;
+        overflow-y: auto; overflow-x: hidden;
         -webkit-overflow-scrolling: touch;
       }
+      #mob-crono.open { display: block; }
+      #mob-crono-inner {
+        display: block;
+        padding: 0 0 24px 0;
+      }
+      .mc-col {
+        display: block;
+        width: 100%; background: #f5f5f3;
+        padding-bottom: 6px;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+      }
+      .mc-yhdr {
+        font-size: 8px; letter-spacing: 0.17em; text-transform: uppercase;
+        color: rgba(0,0,0,0.32); padding: 14px 12px 8px;
+        text-align: left;
+      }
+      .mc-items {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px; background: rgba(0,0,0,0.06);
+      }
+      .mc-cell {
+        aspect-ratio: 1;
+        background: #f5f5f3; cursor: pointer; overflow: hidden;
+        position: relative;
+      }
+      .mc-cell img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .18s; }
+      .mc-cell img.vis { opacity: 1; }
+      /* colori (unused on mobile now, kept for safety) */
       #mob-colori {
         position: fixed; top: 54px; left: 0; right: 0;
         bottom: calc(58px + env(safe-area-inset-bottom, 0px));
@@ -251,32 +281,7 @@
         overflow-y: auto; overflow-x: hidden;
         -webkit-overflow-scrolling: touch;
       }
-      #mob-crono.open, #mob-colori.open { display: block; }
-      #mob-crono-inner {
-        display: flex; flex-direction: row; align-items: stretch;
-        height: 100%; gap: 1px; padding: 0 6px;
-        width: max-content; min-width: 100%;
-      }
-      .mc-col {
-        display: flex; flex-direction: column;
-        width: 68px; flex-shrink: 0; background: #f5f5f3;
-      }
-      .mc-yhdr {
-        font-size: 7px; letter-spacing: 0.17em; text-transform: uppercase;
-        color: #aaa; padding: 7px 0 6px; text-align: center; flex-shrink: 0;
-        border-bottom: 1px solid rgba(0,0,0,0.06);
-      }
-      .mc-items {
-        display: flex; flex-direction: column; flex: 1; min-height: 0;
-        gap: 1px; background: rgba(0,0,0,0.06);
-      }
-      .mc-cell {
-        flex: 1; background: #f5f5f3; cursor: pointer; overflow: hidden;
-        min-height: 36px; position: relative;
-      }
-      .mc-cell img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .18s; }
-      .mc-cell img.vis { opacity: 1; }
-      /* vista colori (Colore) */
+      #mob-colori.open { display: block; }
       #mob-colori-inner { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(0,0,0,0.07); }
       .cc-cell { background: #f5f5f3; cursor: pointer; aspect-ratio: 1; overflow: hidden; }
       .cc-cell img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .18s; }
@@ -1293,12 +1298,8 @@ function goMappa() {
   closeList();
   sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
   modeTarget = 0;
-  if (VW < 768) {
-    // mobile: centra sul centroide al floor zoom (SC_MIN=0.25 → item ~37px)
-    sc = SC_MIN; tx = floorTx; ty = floorTy;
-  } else {
-    sc = fitSc; tx = fitTx; ty = fitTy;
-  }
+  if (VW < 768) { goMobCrono(); return; }
+  sc = fitSc; tx = fitTx; ty = fitTy;
   canvasZoomTarget = sc; canvasPivotX = VW / 2; canvasPivotY = (VH - mobileNavH) / 2;
   vx = 0; vy = 0;
   setActiveMode('bmappa');
@@ -2073,14 +2074,14 @@ async function init() {
     mode1InitTy = (VH-mobileNavH-(pry1-pry0)*mode1InitSc)/2 - pry0*mode1InitSc;
   }
 
-  // mobile: stessa apertura del desktop (canvas Mappa), senza intro animazione
+  // mobile: apre la mappa verticale, senza intro animazione
   if (VW < 768) {
     introStarted = true;
     items.forEach(it => { it.visible = true; it.alpha = 1; });
     document.getElementById('prog').style.opacity = '0';
     const ov2 = document.getElementById('ov');
     ov2.style.opacity = '0';
-    setTimeout(() => { ov2.style.display = 'none'; setActiveMode('bmappa'); }, 150);
+    setTimeout(() => { ov2.style.display = 'none'; goMobCrono(); }, 150);
   } else {
     setActiveMode('bmappa');
     items.forEach(it => { it.visible = true; });
