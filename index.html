@@ -765,8 +765,8 @@ function render() {
 
   const mapAlpha = 1 - sphereT; // elementi solo-mappa sfumano uscendo
 
-  // griglie anni verticali
-  if (mapAlpha > 0.01) {
+  // griglie anni verticali (solo desktop — su mobile anno è sull'asse Y)
+  if (mapAlpha > 0.01 && VW >= 768) {
     ctx.save();
     ctx.globalAlpha = mapAlpha;
     ctx.strokeStyle = 'rgba(0,0,0,0.05)';
@@ -788,8 +788,8 @@ function render() {
     ctx.restore();
   }
 
-  // barra date fissa in basso
-  if (mapAlpha > 0.01) {
+  // barra date fissa in basso (solo desktop)
+  if (mapAlpha > 0.01 && VW >= 768) {
     ctx.save();
     ctx.globalAlpha = mapAlpha;
     ctx.font = '600 11px \'NHG\',\'Helvetica Neue\',Arial';
@@ -1298,7 +1298,6 @@ function goMappa() {
   closeList();
   sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
   modeTarget = 0;
-  if (VW < 768) { goMobCrono(); return; }
   sc = fitSc; tx = fitTx; ty = fitTy;
   canvasZoomTarget = sc; canvasPivotX = VW / 2; canvasPivotY = (VH - mobileNavH) / 2;
   vx = 0; vy = 0;
@@ -2032,10 +2031,22 @@ async function init() {
   document.getElementById('hmeta').textContent =
     `${items.length} immagini  ·  ${Math.min(...yrs)}–${Math.max(...yrs)}`;
 
-  // ── MOBILE FUGA: ricalibratura posizioni per portrait ────────────────────────
-  // Formula: mxR = (VW/2) × SC_MIN / sc1² — garantisce che al modo1InitSc
-  // gli item siano entro il viewport dato che sp = sc1/SC_MIN.
+  // ── MOBILE: ricalibrazione per formato portrait ───────────────────────────────
   if (VW < 768) {
+    // Mappa verticale: ruota 90° le coordinate — anno su Y, colore su X (compresso).
+    // Mantiene tutte le relazioni spaziali, sviluppa la composizione in altezza.
+    const cx0 = items.reduce((s, it) => s + it.mx, 0) / items.length;
+    const cy0 = items.reduce((s, it) => s + it.my, 0) / items.length;
+    items.forEach(it => {
+      const dx = it.mx - cx0; // offset anno (era orizzontale)
+      const dy = it.my - cy0; // offset colore (era verticale)
+      it.mx = CW / 2 + dy * 0.40; // colore → X (compresso per stare nel viewport)
+      it.my = CH / 2 + dx * 0.70; // anno → Y (tutto l'archivio visibile in altezza)
+    });
+
+    // Fuga: ricalibra posizioni per portrait.
+    // Formula: mxR = (VW/2) × SC_MIN / sc1² garantisce che al modo1InitSc
+    // gli item siano entro il viewport (sp = sc1/SC_MIN).
     const sc1 = 0.30;
     const mxR = (VW / 2) * SC_MIN / (sc1 * sc1) * 0.82;
     const myR = ((VH - mobileNavH) / 2) * SC_MIN / (sc1 * sc1) * 0.80;
@@ -2074,14 +2085,14 @@ async function init() {
     mode1InitTy = (VH-mobileNavH-(pry1-pry0)*mode1InitSc)/2 - pry0*mode1InitSc;
   }
 
-  // mobile: apre la mappa verticale, senza intro animazione
+  // mobile: canvas Mappa verticale, senza intro animazione
   if (VW < 768) {
     introStarted = true;
     items.forEach(it => { it.visible = true; it.alpha = 1; });
     document.getElementById('prog').style.opacity = '0';
     const ov2 = document.getElementById('ov');
     ov2.style.opacity = '0';
-    setTimeout(() => { ov2.style.display = 'none'; goMobCrono(); }, 150);
+    setTimeout(() => { ov2.style.display = 'none'; setActiveMode('bmappa'); }, 150);
   } else {
     setActiveMode('bmappa');
     items.forEach(it => { it.visible = true; });
