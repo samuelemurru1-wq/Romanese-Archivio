@@ -203,7 +203,9 @@
       /* bottom nav */
       #mnav {
         display: flex;
-        position: fixed; bottom: 0; left: 0; right: 0; height: 58px;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        height: calc(58px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: env(safe-area-inset-bottom, 0px);
         background: rgba(245,245,243,0.97);
         border-top: 1px solid rgba(0,0,0,0.07);
         z-index: 49; align-items: stretch;
@@ -220,10 +222,10 @@
       .mnb + .mnb { border-left: 1px solid rgba(0,0,0,0.05); }
 
       /* overlays sopra la nav bar */
-      #lv { bottom: 58px; top: 54px; z-index: 50; flex-direction: column; }
-      #gv { bottom: 58px; top: 54px; z-index: 50; }
+      #lv { bottom: calc(58px + env(safe-area-inset-bottom, 0px)); top: 54px; z-index: 50; flex-direction: column; }
+      #gv { bottom: calc(58px + env(safe-area-inset-bottom, 0px)); top: 54px; z-index: 50; }
       #about { z-index: 55; }
-      #fpanel { bottom: 58px; top: auto; right: 0; left: 0; min-width: unset; }
+      #fpanel { bottom: calc(58px + env(safe-area-inset-bottom, 0px)); top: auto; right: 0; left: 0; min-width: unset; }
 
       /* griglia: 2 colonne fisse su mobile */
       #gv-grid { grid-template-columns: repeat(2, 1fr); gap: 2px; }
@@ -233,19 +235,44 @@
       #lv-list { width: 100%; height: 100%; flex-shrink: 0; border-right: none; border-bottom: none; overflow-y: auto; }
       #lv-prev { display: none; }
 
-      /* vista cronologia (Anno) */
-      #mob-crono, #mob-colori {
-        position: fixed; top: 54px; left: 0; right: 0; bottom: 58px;
-        z-index: 45; background: #f5f5f3; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      /* vista mappa orizzontale (Anno) */
+      #mob-crono {
+        position: fixed; top: 54px; left: 0; right: 0;
+        bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+        z-index: 45; background: rgba(0,0,0,0.06);
+        overflow-x: auto; overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+      }
+      #mob-colori {
+        position: fixed; top: 54px; left: 0; right: 0;
+        bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+        z-index: 45; background: #f5f5f3;
+        overflow-y: auto; overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
       }
       #mob-crono.open, #mob-colori.open { display: block; }
-      .mc-yhdr {
-        font-size: 8px; letter-spacing: 0.20em; text-transform: uppercase;
-        color: #999; padding: 18px 12px 7px; border-top: 1px solid rgba(0,0,0,0.06);
+      #mob-crono-inner {
+        display: flex; flex-direction: row; align-items: stretch;
+        height: 100%; gap: 1px; padding: 0 6px;
+        width: max-content; min-width: 100%;
       }
-      .mc-yhdr:first-child { border-top: none; padding-top: 10px; }
-      .mc-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: rgba(0,0,0,0.07); }
-      .mc-cell { background: #f5f5f3; cursor: pointer; aspect-ratio: 1; overflow: hidden; }
+      .mc-col {
+        display: flex; flex-direction: column;
+        width: 68px; flex-shrink: 0; background: #f5f5f3;
+      }
+      .mc-yhdr {
+        font-size: 7px; letter-spacing: 0.17em; text-transform: uppercase;
+        color: #aaa; padding: 7px 0 6px; text-align: center; flex-shrink: 0;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+      }
+      .mc-items {
+        display: flex; flex-direction: column; flex: 1; min-height: 0;
+        gap: 1px; background: rgba(0,0,0,0.06);
+      }
+      .mc-cell {
+        flex: 1; background: #f5f5f3; cursor: pointer; overflow: hidden;
+        min-height: 36px; position: relative;
+      }
       .mc-cell img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .18s; }
       .mc-cell img.vis { opacity: 1; }
       /* vista colori (Colore) */
@@ -508,7 +535,12 @@ function resize() {
   DPR = window.devicePixelRatio || 1;
   VW  = window.innerWidth;
   VH  = window.innerHeight;
-  mobileNavH = VW < 768 ? 58 : 0;
+  if (VW < 768) {
+    const mnavEl = document.getElementById('mnav');
+    mobileNavH = mnavEl ? (mnavEl.offsetHeight || 58) : 58;
+  } else {
+    mobileNavH = 0;
+  }
   cv.width  = VW * DPR;
   cv.height = VH * DPR;
   cv.style.width  = VW + 'px';
@@ -1270,7 +1302,6 @@ function goMappa() {
 }
 
 function goProfondita() {
-  if (VW < 768) { goMobColori(); return; }
   closeList();
   sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
   modeTarget = 1;
@@ -1294,36 +1325,49 @@ function goSfera() {
   dirty = true;
 }
 
-// ── MOBILE: CRONOLOGIA (Anno) ─────────────────────────────────────────────
+// ── MOBILE: MAPPA ORIZZONTALE (Anno) ──────────────────────────────────────
 function buildCronoView() {
   const el = document.getElementById('mob-crono-inner');
   if (el.children.length) return;
-  const sorted = [...items].sort((a, b) => {
-    const ay = a.year || 9999, by = b.year || 9999;
-    return ay - by || (a.hue || 0) - (b.hue || 0);
+
+  // Raggruppa per anno, ordina items per tono cromatico (Y = colore)
+  const byYear = new Map();
+  [...items].sort((a, b) => {
+    const ay = a.year || 9999, by2 = b.year || 9999;
+    return ay - by2 || (a.hue || 0) - (b.hue || 0);
+  }).forEach(it => {
+    const yr = String(it.year || '—');
+    if (!byYear.has(yr)) byYear.set(yr, []);
+    byYear.get(yr).push(it);
   });
-  let curYear = null, row = null;
-  for (const it of sorted) {
-    const yr = it.year || '—';
-    if (yr !== curYear) {
-      curYear = yr;
-      const hdr = document.createElement('div');
-      hdr.className = 'mc-yhdr';
-      hdr.textContent = yr;
-      el.appendChild(hdr);
-      row = document.createElement('div');
-      row.className = 'mc-row';
-      el.appendChild(row);
+
+  for (const [yr, its] of byYear) {
+    const col = document.createElement('div');
+    col.className = 'mc-col';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'mc-yhdr';
+    hdr.textContent = yr;
+    col.appendChild(hdr);
+
+    const itemsWrap = document.createElement('div');
+    itemsWrap.className = 'mc-items';
+
+    for (const it of its) {
+      const cell = document.createElement('div');
+      cell.className = 'mc-cell';
+      const img = document.createElement('img');
+      img.dataset.src = it.thumbSrc;
+      img.alt = '';
+      cell.appendChild(img);
+      cell.onclick = () => openLB(it.idx);
+      itemsWrap.appendChild(cell);
     }
-    const cell = document.createElement('div');
-    cell.className = 'mc-cell';
-    const img = document.createElement('img');
-    img.dataset.src = it.thumbSrc;
-    img.alt = '';
-    cell.appendChild(img);
-    cell.onclick = () => openLB(it.idx);
-    row.appendChild(cell);
+
+    col.appendChild(itemsWrap);
+    el.appendChild(col);
   }
+
   const cronoCt = document.getElementById('mob-crono');
   const obs = new IntersectionObserver(entries => {
     for (const e of entries) {
@@ -1333,7 +1377,7 @@ function buildCronoView() {
       img.onload = () => img.classList.add('vis');
       obs.unobserve(img);
     }
-  }, { root: cronoCt, rootMargin: '600px' });
+  }, { root: cronoCt, rootMargin: '0px 400px' });
   el.querySelectorAll('img[data-src]').forEach(img => obs.observe(img));
 }
 
@@ -1981,6 +2025,21 @@ async function init() {
   const yrs = items.map(d => d.year).filter(y => y && y >= MNY && y <= MXY);
   document.getElementById('hmeta').textContent =
     `${items.length} immagini  ·  ${Math.min(...yrs)}–${Math.max(...yrs)}`;
+
+  // ── MOBILE FUGA: ricalibratura posizioni per schermo portrait ────────────────
+  // Su mobile riduciamo lo spread mx1/my1 in modo che gli item si distribuiscano
+  // entro i bordi dello schermo al livello di zoom iniziale, e aumentiamo mode1InitSc
+  // così le miniature appaiono grandi (~44–130 px a seconda della profondità).
+  if (VW < 768) {
+    const sc1 = 0.30;
+    const mxR = (VW  / 2 / sc1) * 0.90;
+    const myR = ((VH - mobileNavH) / 2 / sc1) * 0.85;
+    items.forEach(it => {
+      it.mx1 = CW / 2 + dj(it.rel_path, 5, mxR * 2);
+      it.my1 = CH / 2 + dj(it.rel_path, 6, myR * 2);
+    });
+    mode1InitSc = sc1;
+  }
 
   // centroidi per le due modalità
   centX0 = items.reduce((s, it) => s + it.mx,  0) / items.length;
