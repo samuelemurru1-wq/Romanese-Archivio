@@ -95,7 +95,7 @@
     #lb.open { display: block; }
     body.lb-open #hud, body.lb-open #mnav { opacity: 0; pointer-events: none; transition: opacity 0.2s; }
     #hud, #mnav { transition: opacity 0.2s; }
-    #lb-overlay { position: absolute; inset: 0; background: transparent; cursor: pointer; }
+    #lb-overlay { position: absolute; inset: 0; background: rgba(245,245,243,0.90); cursor: pointer; }
     #li { position: fixed; object-fit: contain; z-index: 201; cursor: pointer; transform-origin: center center; display: block; }
     #lx { position: fixed; top: 16px; right: 22px; z-index: 202; font-family: inherit; font-size: 8px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(0,0,0,0.4); background: none; border: none; cursor: pointer; transition: color .12s; padding: 6px 0; }
     #lx:hover { color: #111; }
@@ -441,7 +441,7 @@ const CATS = {'DOCUMENTI':'Documenti','FOTO POLAROID':'Polaroid','FOTO SPARSE':'
 
 // Spread dal centroide: le foto si espandono proporzionalmente al zoom.
 // sp = sc / SC_MIN — invariante: al zoom minimo le foto sono alle posizioni originali.
-const SC_MIN = 0.10;
+let SC_MIN = 0.10;
 const FOCAL  = 1800;
 const catOrder = ['DOCUMENTI','FOTO POLAROID','FOTO SPARSE','LIBRETTI','OGGETTI','PORTAFOTO'];
 const GRID_ROW_H = (CH - 2 * PY) / catOrder.length;
@@ -1084,7 +1084,7 @@ function tick() {
     const scFloor = modeTarget === 1 ? mode1InitSc : SC_MIN;
     const tgtTx   = modeTarget === 1 ? mode1InitTx : (grigliaT > 0.5 ? grigliaFloorTx : floorTx);
     const tgtTy   = modeTarget === 1 ? mode1InitTy : (grigliaT > 0.5 ? grigliaFloorTy : floorTy);
-    if (!drg && sc <= scFloor && fitSc > 0) {
+    if (!drg && sc <= scFloor && fitSc > 0 && !(VW < 768 && modeTarget === 0)) {
       const dx = tgtTx - tx, dy = tgtTy - ty;
       if (Math.abs(dx) > 0.2 || Math.abs(dy) > 0.2) {
         tx += dx * 0.07; ty += dy * 0.07;
@@ -1289,11 +1289,15 @@ function closeList() {
 }
 
 function goMappa() {
-  if (VW < 768) { goMobCrono(); return; }
   closeList();
   sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
   modeTarget = 0;
-  sc = fitSc; tx = fitTx; ty = fitTy;
+  if (VW < 768) {
+    // mobile: centra sul centroide al floor zoom (SC_MIN=0.25 → item ~37px)
+    sc = SC_MIN; tx = floorTx; ty = floorTy;
+  } else {
+    sc = fitSc; tx = fitTx; ty = fitTy;
+  }
   canvasZoomTarget = sc; canvasPivotX = VW / 2; canvasPivotY = (VH - mobileNavH) / 2;
   vx = 0; vy = 0;
   setActiveMode('bmappa');
@@ -2026,14 +2030,15 @@ async function init() {
   document.getElementById('hmeta').textContent =
     `${items.length} immagini  ·  ${Math.min(...yrs)}–${Math.max(...yrs)}`;
 
-  // ── MOBILE FUGA: ricalibratura posizioni per schermo portrait ────────────────
-  // Su mobile riduciamo lo spread mx1/my1 in modo che gli item si distribuiscano
-  // entro i bordi dello schermo al livello di zoom iniziale, e aumentiamo mode1InitSc
-  // così le miniature appaiono grandi (~44–130 px a seconda della profondità).
+  // ── MOBILE: SC_MIN aumentato + posizioni Fuga ricaliibrate per portrait ──────
+  // SC_MIN = 0.25 → al floor zoom sp=1 (nessuno spread extra), item ~37px leggibili.
+  // La formula mxR = (schermo/2) × SC_MIN / sc1² garantisce che al modo1InitSc
+  // gli item della Fuga restino entro il viewport (sp = sc1/SC_MIN = 1.2).
   if (VW < 768) {
+    SC_MIN = 0.25;
     const sc1 = 0.30;
-    const mxR = (VW  / 2 / sc1) * 0.90;
-    const myR = ((VH - mobileNavH) / 2 / sc1) * 0.85;
+    const mxR = (VW / 2) * SC_MIN / (sc1 * sc1) * 0.82;
+    const myR = ((VH - mobileNavH) / 2) * SC_MIN / (sc1 * sc1) * 0.80;
     items.forEach(it => {
       it.mx1 = CW / 2 + dj(it.rel_path, 5, mxR * 2);
       it.my1 = CH / 2 + dj(it.rel_path, 6, myR * 2);
@@ -2069,14 +2074,14 @@ async function init() {
     mode1InitTy = (VH-mobileNavH-(pry1-pry0)*mode1InitSc)/2 - pry0*mode1InitSc;
   }
 
-  // mobile: salta intro, apre griglia subito (lazy-load per immagine)
+  // mobile: stessa apertura del desktop (canvas Mappa), senza intro animazione
   if (VW < 768) {
     introStarted = true;
     items.forEach(it => { it.visible = true; it.alpha = 1; });
     document.getElementById('prog').style.opacity = '0';
     const ov2 = document.getElementById('ov');
     ov2.style.opacity = '0';
-    setTimeout(() => { ov2.style.display = 'none'; goGriglia(); }, 150);
+    setTimeout(() => { ov2.style.display = 'none'; setActiveMode('bmappa'); }, 150);
   } else {
     setActiveMode('bmappa');
     items.forEach(it => { it.visible = true; });
