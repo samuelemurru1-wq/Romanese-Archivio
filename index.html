@@ -233,7 +233,7 @@
       .gv-num { font-size: 7px; padding: 5px 6px 3px; }
 
       /* lista: full height, tap → lightbox */
-      #lv-list { width: 100%; height: 100%; flex-shrink: 0; border-right: none; border-bottom: none; overflow-y: auto; }
+      #lv-list { width: 100%; flex: 1; min-height: 0; border-right: none; border-bottom: none; overflow-y: auto; -webkit-overflow-scrolling: touch; }
       #lv-prev { display: none; }
 
       /* vista mappa orizzontale (Anno) */
@@ -299,6 +299,38 @@
 
       /* tooltip: nascosto su touch */
       #tip { display: none !important; }
+    }
+
+    /* ── Landscape phone (VH<500): mostra la nav e gli overlay mobili ──────── */
+    @media (orientation: landscape) and (max-height: 500px) {
+      #hview-desc { display: none; }
+      #tip { display: none !important; }
+      #mnav {
+        display: flex;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        height: calc(44px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        background: rgba(245,245,243,0.97);
+        border-top: 1px solid rgba(0,0,0,0.07);
+        z-index: 49; align-items: stretch;
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      }
+      .mnb {
+        flex: 1; display: flex; align-items: center; justify-content: center;
+        font-family: inherit; font-size: 7px; letter-spacing: 0.14em;
+        text-transform: uppercase; color: rgba(0,0,0,0.28);
+        background: none; border: none; cursor: pointer; transition: color 0.1s;
+        white-space: nowrap;
+      }
+      .mnb.active { color: #111; font-weight: 500; }
+      .mnb + .mnb { border-left: 1px solid rgba(0,0,0,0.05); }
+      #lv { bottom: calc(44px + env(safe-area-inset-bottom, 0px)); top: 54px; z-index: 50; flex-direction: column; }
+      #lv-list { flex: 1; min-height: 0; border-right: none; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+      #lv-prev { display: none; }
+      #gv { bottom: calc(44px + env(safe-area-inset-bottom, 0px)); top: 54px; z-index: 50; }
+      #gv-grid { grid-template-columns: repeat(4, 1fr); }
+      #fpanel { bottom: calc(44px + env(safe-area-inset-bottom, 0px)); top: auto; right: 0; left: 0; min-width: unset; }
+      #mob-crono, #mob-colori { bottom: calc(44px + env(safe-area-inset-bottom, 0px)); top: 54px; }
     }
   </style>
 </head>
@@ -537,16 +569,65 @@ const ctx = cv.getContext('2d', { alpha: false });
 const tip = document.getElementById('tip');
 let DPR = 1, VW = 0, VH = 0, mobileNavH = 0;
 
+let _prevMobile = null; // null = prima chiamata
+
 function resize() {
   DPR = window.devicePixelRatio || 1;
   VW  = window.innerWidth;
   VH  = window.innerHeight;
-  if (VW < 768) {
-    const mnavEl = document.getElementById('mnav');
-    mobileNavH = mnavEl ? (mnavEl.offsetHeight || 58) : 58;
-  } else {
-    mobileNavH = 0;
+
+  // mobileNavH: legge l'altezza effettiva renderizzata (funziona anche in landscape phone)
+  const mnavEl = document.getElementById('mnav');
+  mobileNavH = (mnavEl && mnavEl.offsetHeight > 0) ? mnavEl.offsetHeight : 0;
+
+  // Ricalcola coordinate e fit su cambio portrait ↔ landscape
+  const nowMobile = VW < 768;
+  if (_prevMobile !== null && _prevMobile !== nowMobile && items.length) {
+    const cx0 = items.reduce((s, it) => s + (it.bx + it.jx), 0) / items.length;
+    const cy0 = items.reduce((s, it) => s + (it.by + it.jy), 0) / items.length;
+    if (nowMobile) {
+      // Portrait: ruota anno→Y, colore→X
+      items.forEach(it => {
+        const dx = (it.bx + it.jx) - cx0;
+        const dy = (it.by + it.jy) - cy0;
+        it.mx = CW / 2 + dy * 0.40;
+        it.my = CH / 2 + dx * 0.70;
+      });
+      const sc1 = 0.30;
+      const mxR = (VW / 2) * SC_MIN / (sc1 * sc1) * 0.82;
+      const myR = ((VH - mobileNavH) / 2) * SC_MIN / (sc1 * sc1) * 0.80;
+      items.forEach(it => {
+        it.mx1 = CW / 2 + dj(it.rel_path, 5, mxR * 2);
+        it.my1 = CH / 2 + dj(it.rel_path, 6, myR * 2);
+      });
+      mode1InitSc = 0.30;
+    } else {
+      // Landscape/desktop: ripristina coordinate originali
+      items.forEach(it => {
+        it.mx  = it.bx + it.jx;
+        it.my  = it.by + it.jy;
+        it.mx1 = CW / 2 + dj(it.rel_path, 5, 2500);
+        it.my1 = CH / 2 + dj(it.rel_path, 6, 2000);
+      });
+      mode1InitSc = 0.18;
+    }
+    centX0 = items.reduce((s, it) => s + it.mx,  0) / items.length;
+    centY0 = items.reduce((s, it) => s + it.my,  0) / items.length;
+    centX1 = CW / 2;
+    centY1 = items.reduce((s, it) => s + it.my1, 0) / items.length;
+    centX = centX0; centY = centY0;
+    mode1InitTx = VW / 2 - centX1 * mode1InitSc;
+    mode1InitTy = (VH - mobileNavH) / 2 - centY1 * mode1InitSc;
+    fitAll();
+    sc = fitSc; tx = fitTx; ty = fitTy;
+    canvasZoomTarget = sc; vx = 0; vy = 0;
+    modeTarget = 0; sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
+    setActiveMode('bmappa');
+    // Chiudi pannelli HTML che appartengono solo al portrait mobile
+    if (!nowMobile) document.getElementById('mob-crono').classList.remove('open');
   }
+  _prevMobile = nowMobile;
+
   cv.width  = VW * DPR;
   cv.height = VH * DPR;
   cv.style.width  = VW + 'px';
