@@ -196,7 +196,7 @@
       .tl { left: 14px; }
       .logo-img { height: 18px; }
       #hview-desc { display: none; }
-      .tr .hb:not(#bfiltro):not(#babout) { display: none; }
+      .tr .hb:not(#bfiltro):not(#babout):not(#bdark) { display: none; }
       .tr .tr-sep { display: none; }
       .tr .zt { display: none; }
       .tr { overflow: visible; max-width: unset; padding-right: 10px; }
@@ -300,7 +300,52 @@
       /* tooltip: nascosto su touch */
       #tip { display: none !important; }
     }
+
+    /* ── DARK MODE ───────────────────────────────────────────── */
+    html.dark body { background: #111; color: #e8e6e3; }
+    html.dark canvas { background: #111; }
+    html.dark .meta, html.dark #hview-desc { color: #e8e6e3; }
+    html.dark .hb { color: rgba(232,230,227,0.6); }
+    html.dark .hb:hover { background: rgba(255,255,255,0.08); color: #e8e6e3; }
+    html.dark .hb.active { color: #e8e6e3; }
+    html.dark .tr-sep { background: rgba(255,255,255,0.1); }
+    html.dark .zt { color: rgba(232,230,227,0.5); }
+    html.dark .logo-img { filter: invert(1); }
+    html.dark #fpanel { background: #1b1b19; border-color: rgba(255,255,255,0.09); }
+    html.dark .fp-cat { color: rgba(232,230,227,0.28); }
+    html.dark .fp-cat:hover { color: rgba(232,230,227,0.65); }
+    html.dark .fp-cat.vis { color: #e8e6e3; }
+    html.dark .fp-all { color: rgba(232,230,227,0.35); }
+    html.dark #lv { background: #111; }
+    html.dark #lv-list { border-color: rgba(255,255,255,0.07); }
+    html.dark .lvr { border-color: rgba(255,255,255,0.05); color: #e8e6e3; }
+    html.dark .lvr:hover { background: rgba(255,255,255,0.04); }
+    html.dark .lvr.pin { background: rgba(255,255,255,0.06); }
+    html.dark .lvy, html.dark .lvc { color: rgba(232,230,227,0.4); }
+    html.dark #lv-cap { color: rgba(232,230,227,0.35); }
+    html.dark #gv { background: #111; }
+    html.dark #gv-grid { background: rgba(255,255,255,0.05); }
+    html.dark .gv-cell { background: #111; }
+    html.dark .gv-sq { background: #222; }
+    html.dark .gv-num { color: rgba(232,230,227,0.25); }
+    html.dark .gv-year { color: rgba(232,230,227,0.4); }
+    html.dark .gv-cat { color: rgba(232,230,227,0.18); }
+    html.dark .gv-cell:hover .gv-sq::after { box-shadow: inset 0 0 0 2px #e8e6e3; }
+    html.dark #lb-overlay { background: rgba(17,17,17,0.92); }
+    html.dark #lx, html.dark .lb-arr { color: rgba(232,230,227,0.6); }
+    html.dark #lt, html.dark #lm { color: #e8e6e3; }
+    html.dark #lb-info { border-color: rgba(255,255,255,0.07); }
+    html.dark #mnav { background: rgba(17,17,17,0.97); border-color: rgba(255,255,255,0.07); }
+    html.dark .mnb { color: rgba(232,230,227,0.28); }
+    html.dark .mnb.active { color: #e8e6e3; }
+    html.dark .mnb + .mnb { border-color: rgba(255,255,255,0.05); }
+    html.dark #mob-crono, html.dark #mob-colori { background: #111; }
+    html.dark .mc-cell, html.dark .cc-cell { background: #111; }
+    html.dark .about-panel { background: rgba(22,22,20,0.96); color: #e8e6e3; }
+    html.dark .about-inner a { color: #e8e6e3; }
+    html.dark #prog { background: #e8e6e3; }
   </style>
+  <script>(function(){var t=localStorage.getItem('romanese-theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');})()</script>
 </head>
 <body>
 
@@ -327,6 +372,7 @@
     <button class="hb" id="bfiltro">Categorie</button>
     <div class="tr-sep"></div>
     <button class="hb" id="babout">About</button>
+    <button class="hb" id="bdark" title="Dark mode">◐</button>
   </div>
 </div>
 
@@ -648,10 +694,13 @@ function startReveal() {
   next();
 }
 
+const isDark = () => document.documentElement.classList.contains('dark');
+
 // ── RENDER SFERA ──────────────────────────────────────────────────────────────
 function renderSphere(masterAlpha = 1) {
+  const dk = isDark();
   ctx.globalAlpha = masterAlpha;
-  ctx.fillStyle = '#f5f5f3';
+  ctx.fillStyle = dk ? '#111111' : '#f5f5f3';
   ctx.fillRect(0, 0, VW, VH);
   ctx.globalAlpha = 1;
 
@@ -682,7 +731,7 @@ function renderSphere(masterAlpha = 1) {
   {
     const chrono = proj.slice().sort((a, b) => (a.it.year || 9999) - (b.it.year || 9999));
     ctx.save();
-    ctx.strokeStyle = 'rgba(0,0,0,0.13)';
+    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.13)';
     ctx.lineWidth = 0.5;
     ctx.globalAlpha = 0.6 * masterAlpha;
     ctx.beginPath();
@@ -734,7 +783,7 @@ function renderSphere(masterAlpha = 1) {
   }
 
   if (hov) {
-    ctx.strokeStyle = '#111';
+    ctx.strokeStyle = dk ? '#e8e6e3' : '#111';
     ctx.lineWidth = Math.max(1.5, 3 * Math.min(sphZoom, 1));
     ctx.strokeRect(hov.sx - hov.iw / 2 + 0.5 | 0, hov.sy - hov.ih / 2 + 0.5 | 0, hov.iw - 1, hov.ih - 1);
   }
@@ -757,10 +806,11 @@ function projectSphere(it) {
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function render() {
+  const dk = isDark();
   // fast path: sfera completa
   if (sphereT > 0.998 && sphereTarget === 1) { renderSphere(1); return; }
 
-  ctx.fillStyle = '#f5f5f3';
+  ctx.fillStyle = dk ? '#111111' : '#f5f5f3';
   ctx.fillRect(0, 0, VW, VH);
 
   const mapAlpha = 1 - sphereT; // elementi solo-mappa sfumano uscendo
@@ -769,7 +819,7 @@ function render() {
   if (mapAlpha > 0.01 && VW >= 768) {
     ctx.save();
     ctx.globalAlpha = mapAlpha;
-    ctx.strokeStyle = 'rgba(0,0,0,0.05)';
+    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
     ctx.lineWidth = 1;
     for (let y = 1960; y <= 2000; y += 5) {
       const x = toX(y) * sc + tx;
@@ -778,7 +828,7 @@ function render() {
     }
     const fs = Math.max(8, 200 * sc);
     ctx.font = `700 ${fs}px 'NHG','Helvetica Neue',Arial`;
-    ctx.fillStyle = 'rgba(0,0,0,0.04)';
+    ctx.fillStyle = dk ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
     ctx.textBaseline = 'top';
     for (let d = 1960; d <= 2000; d += 10) {
       const x = toX(d) * sc + tx;
@@ -797,19 +847,23 @@ function render() {
     ctx.textAlign = 'center';
     const barBot = VH - mobileNavH;
     const barY = barBot - 10;
-    ctx.fillStyle = 'rgba(245,245,243,0.92)';
+    ctx.fillStyle = dk ? 'rgba(17,17,17,0.92)' : 'rgba(245,245,243,0.92)';
     ctx.fillRect(0, barBot - 28, VW, 28);
-    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(0, barBot - 28); ctx.lineTo(VW, barBot - 28); ctx.stroke();
     for (let y = 1960; y <= 2000; y += 5) {
       const rawX = toX(y) * sc + tx;
       const onScreen = rawX >= 0 && rawX <= VW;
       const sx = Math.max(22, Math.min(VW - 22, rawX));
-      ctx.strokeStyle = onScreen ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)';
+      ctx.strokeStyle = dk
+        ? (onScreen ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.12)')
+        : (onScreen ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)');
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(sx, barBot - 28); ctx.lineTo(sx, barBot - 22); ctx.stroke();
-      ctx.fillStyle = onScreen ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.25)';
+      ctx.fillStyle = dk
+        ? (onScreen ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.28)')
+        : (onScreen ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.25)');
       ctx.fillText(y, sx, barY);
     }
     ctx.textAlign = 'left';
@@ -820,7 +874,7 @@ function render() {
   if (grigliaT > 0.01) {
     ctx.save();
     ctx.globalAlpha = grigliaT;
-    ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
     ctx.lineWidth = 1;
     for (let i = 0; i <= catOrder.length; i++) {
       const y = (PY + i * GRID_ROW_H) * sc + ty;
@@ -828,7 +882,7 @@ function render() {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(VW, y); ctx.stroke();
     }
     ctx.font = '500 9px \'NHG\',\'Helvetica Neue\',Arial';
-    ctx.fillStyle = '#999';
+    ctx.fillStyle = dk ? 'rgba(232,230,227,0.35)' : '#999';
     ctx.textBaseline = 'middle';
     catOrder.forEach((cat, i) => {
       const y = (PY + (i + 0.5) * GRID_ROW_H) * sc + ty;
@@ -903,7 +957,7 @@ function render() {
     const chrono = proj.slice().sort((a, b) =>
       (a.it.year || 9999) - (b.it.year || 9999) || a.it.my - b.it.my);
     ctx.save();
-    ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
     ctx.lineWidth = 0.5;
     ctx.globalAlpha = 0.55;
     ctx.beginPath();
@@ -959,7 +1013,7 @@ function render() {
   }
 
   if (hov) {
-    ctx.strokeStyle = '#111';
+    ctx.strokeStyle = dk ? '#e8e6e3' : '#111';
     ctx.lineWidth = Math.max(1.5, 3 * Math.min(sc, 1));
     ctx.strokeRect(hov.ix + .5, hov.iy + .5, hov.iw - 1, (hov.ih || hov.iw) - 1);
   }
@@ -984,7 +1038,7 @@ function startIntro() {
 }
 
 function renderIntro() {
-  ctx.fillStyle = '#f5f5f3';
+  ctx.fillStyle = isDark() ? '#111111' : '#f5f5f3';
   ctx.fillRect(0, 0, VW, VH);
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
@@ -1075,13 +1129,17 @@ function tick() {
   for (let i = 0; i < items.length; i++) {
     const it = items[i];
     if (it.visible && it.alpha < 1) { it.alpha = Math.min(1, it.alpha + 0.055); dirty = true; }
-    const tfa = hiddenCats.size === 0 || !hiddenCats.has(it.cat) ? 1 : 0.05;
+    const tfa = hiddenCats.size === 0 || !hiddenCats.has(it.cat) ? 1 : 0;
     if (Math.abs(it.fa - tfa) > 0.004) { it.fa += (tfa - it.fa) * 0.12; dirty = true; }
     else it.fa = tfa;
   }
   // inertia pan — decelerazione fluida dopo il drag
   if (!drg && (Math.abs(vx) > 0.3 || Math.abs(vy) > 0.3)) {
     tx += vx; ty += vy;
+    const txPre = tx, tyPre = ty;
+    clampPan();
+    if (tx !== txPre) vx = 0;
+    if (ty !== tyPre) vy = 0;
     vx *= 0.88; vy *= 0.88;
     dirty = true;
   }
@@ -1458,10 +1516,13 @@ function buildGridView() {
     if (!a.year) return 1; if (!b.year) return -1;
     return a.year - b.year || a.cat.localeCompare(b.cat);
   });
-  sorted.forEach((it, i) => {
+  let counter = 0;
+  sorted.forEach(it => {
+    if (hiddenCats.has(it.cat)) return;
+    counter++;
     const cell = document.createElement('div');
     cell.className = 'gv-cell';
-    const num = String(i + 1).padStart(3, '0');
+    const num = String(counter).padStart(3, '0');
     cell.innerHTML =
       `<span class="gv-num">${num}</span>` +
       `<div class="gv-sq"><img data-src="${it.thumbSrc}" alt=""></div>` +
@@ -1510,6 +1571,10 @@ document.getElementById('bfiltro').onclick = e => {
   e.stopPropagation();
   fpanel.classList.toggle('open');
 };
+function applyFiltersToHtmlViews() {
+  if (document.getElementById('lv').classList.contains('open')) buildListView();
+  if (document.getElementById('gv').classList.contains('open')) buildGridView();
+}
 document.querySelectorAll('.fp-cat').forEach(btn => {
   btn.onclick = e => {
     e.stopPropagation();
@@ -1522,6 +1587,7 @@ document.querySelectorAll('.fp-cat').forEach(btn => {
       btn.classList.remove('vis');
     }
     dirty = true;
+    applyFiltersToHtmlViews();
   };
 });
 document.getElementById('fp-all').onclick = e => {
@@ -1529,8 +1595,22 @@ document.getElementById('fp-all').onclick = e => {
   hiddenCats.clear();
   document.querySelectorAll('.fp-cat').forEach(b => b.classList.add('vis'));
   dirty = true;
+  applyFiltersToHtmlViews();
 };
 document.addEventListener('click', () => fpanel.classList.remove('open'));
+
+document.getElementById('bdark').onclick = e => {
+  e.stopPropagation();
+  const nowDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('romanese-theme', nowDark ? 'dark' : 'light');
+  dirty = true;
+};
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+  if (!localStorage.getItem('romanese-theme')) {
+    document.documentElement.classList.toggle('dark', e.matches);
+    dirty = true;
+  }
+});
 
 // ── HIT TEST ─────────────────────────────────────────────────────────────────
 function hitAt(mx, my) {
@@ -1895,6 +1975,7 @@ function buildListView() {
   }
 
   sorted.forEach(it => {
+    if (hiddenCats.has(it.cat)) return;
     const row = document.createElement('div');
     row.className = 'lvr';
     row.innerHTML =
