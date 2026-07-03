@@ -78,6 +78,11 @@
       letter-spacing: 0.04em; min-width: 34px;
       text-align: center; user-select: none;
     }
+    #mcoord {
+      font-size: 8.5px; color: #111;
+      letter-spacing: 0.04em; user-select: none;
+      white-space: nowrap;
+    }
 
     /* ── PROGRESS ───────────────────────────────────────────── */
     #prog { position: fixed; bottom: 0; left: 0; width: 0; height: 1px; background: #888; z-index: 60; transition: width .1s; opacity: 0.5; }
@@ -200,6 +205,7 @@
       .tr .hb:not(#bfiltro):not(#babout):not(#bdark) { display: none; }
       .tr .tr-sep { display: none; }
       .tr .zt { display: none; }
+      #mcoord { display: none; }
       .tr { overflow: visible; max-width: unset; padding-right: 10px; }
 
       /* bottom nav */
@@ -311,6 +317,7 @@
     html.dark .hb.active { color: #e8e6e3; }
     html.dark .tr-sep { background: rgba(255,255,255,0.1); }
     html.dark .zt { color: rgba(232,230,227,0.5); }
+    html.dark #mcoord { color: rgba(232,230,227,0.5); }
     html.dark .logo-img { filter: invert(1); }
     html.dark #fpanel { background: #1b1b19; border-color: rgba(255,255,255,0.09); }
     html.dark .fp-cat { color: rgba(232,230,227,0.28); }
@@ -371,6 +378,8 @@
     <button class="hb" id="bsfera">Sfera</button>
     <div class="tr-sep"></div>
     <span class="zt" id="zt">0%</span>
+    <div class="tr-sep"></div>
+    <span id="mcoord">X: 0px, Y: 0px</span>
     <div class="tr-sep"></div>
     <button class="hb" id="bfiltro">Categorie</button>
     <div class="tr-sep"></div>
@@ -1679,8 +1688,10 @@ cv.addEventListener('mousedown', e => {
   lastPX = e.clientX; lastPY = e.clientY; lastPT = performance.now();
   cv.classList.add('drag');
 });
+const mcoordEl = document.getElementById('mcoord');
 window.addEventListener('mousemove', e => {
   mouseX = e.clientX; mouseY = e.clientY;
+  if (mcoordEl) mcoordEl.textContent = `X: ${mouseX}px, Y: ${mouseY}px`;
   if (drg) {
     if (sphereMode) {
       const dx = e.clientX - x0, dy = e.clientY - y0;
