@@ -2156,7 +2156,7 @@ document.getElementById('lb').addEventListener('touchend', e => {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init() {
-  const data = await (await fetch('/data.json')).json();
+  const data = await (await fetch('data.json')).json();
   const raw  = (data.items || []).filter(d => !d.error);
 
   items = raw.map((it, i) => {
