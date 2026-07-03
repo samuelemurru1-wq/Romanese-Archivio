@@ -550,7 +550,7 @@ function extractPosYear(p, seed) {
 }
 const getCat   = p => p.split('/')[0];
 const getTitle = p => p.split('/').pop().replace(/\.[^.]+$/, '').replace(/^\[[\d\s:/]+\]\s*/, '').replace(/_+/g, ' ').trim();
-const imgUrl   = p => '/img/' + p.split('/').map(encodeURIComponent).join('/');
+const imgUrl   = p => 'img/' + p.split('/').map(encodeURIComponent).join('/');
 const thumbUrl = p => imgUrl(p) + '?t=1';
 function getSize(c, t) {
   const u = t.toUpperCase();
