@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Romanese — Archivio</title>
-  <script>(function(){var t=localStorage.getItem('romanese-theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');})();</script>
   <style>
     @font-face { font-family: 'NHG'; font-weight: 400; font-style: normal; src: local('NeueHaasDisplay-Roman'), local('Neue Haas Grotesk Display Pro'); }
     @font-face { font-family: 'NHG'; font-weight: 500; font-style: normal; src: local('NeueHaasDisplay-Medium'), local('Neue Haas Grotesk Display Pro Medium'); }
@@ -197,7 +196,7 @@
       .tl { left: 14px; }
       .logo-img { height: 18px; }
       #hview-desc { display: none; }
-      .tr .hb:not(#bfiltro):not(#babout):not(#bdark) { display: none; }
+      .tr .hb:not(#bfiltro):not(#babout) { display: none; }
       .tr .tr-sep { display: none; }
       .tr .zt { display: none; }
       .tr { overflow: visible; max-width: unset; padding-right: 10px; }
@@ -234,7 +233,7 @@
       .gv-num { font-size: 7px; padding: 5px 6px 3px; }
 
       /* lista: full height, tap → lightbox */
-      #lv-list { width: 100%; flex: 1; min-height: 0; border-right: none; border-bottom: none; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+      #lv-list { width: 100%; height: 100%; flex-shrink: 0; border-right: none; border-bottom: none; overflow-y: auto; }
       #lv-prev { display: none; }
 
       /* vista mappa orizzontale (Anno) */
@@ -301,119 +300,6 @@
       /* tooltip: nascosto su touch */
       #tip { display: none !important; }
     }
-
-    /* ── Landscape phone (VH<500): mostra la nav e gli overlay mobili ──────── */
-    @media (orientation: landscape) and (max-height: 500px) {
-      #hview-desc { display: none; }
-      #tip { display: none !important; }
-      #mnav {
-        display: flex;
-        position: fixed; bottom: 0; left: 0; right: 0;
-        height: calc(44px + env(safe-area-inset-bottom, 0px));
-        padding-bottom: env(safe-area-inset-bottom, 0px);
-        background: rgba(245,245,243,0.97);
-        border-top: 1px solid rgba(0,0,0,0.07);
-        z-index: 49; align-items: stretch;
-        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      }
-      .mnb {
-        flex: 1; display: flex; align-items: center; justify-content: center;
-        font-family: inherit; font-size: 7px; letter-spacing: 0.14em;
-        text-transform: uppercase; color: rgba(0,0,0,0.28);
-        background: none; border: none; cursor: pointer; transition: color 0.1s;
-        white-space: nowrap;
-      }
-      .mnb.active { color: #111; font-weight: 500; }
-      .mnb + .mnb { border-left: 1px solid rgba(0,0,0,0.05); }
-      #lv { bottom: calc(44px + env(safe-area-inset-bottom, 0px)); top: 54px; z-index: 50; flex-direction: column; }
-      #lv-list { flex: 1; min-height: 0; border-right: none; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-      #lv-prev { display: none; }
-      #gv { bottom: calc(44px + env(safe-area-inset-bottom, 0px)); top: 54px; z-index: 50; }
-      #gv-grid { grid-template-columns: repeat(4, 1fr); }
-      #fpanel { bottom: calc(44px + env(safe-area-inset-bottom, 0px)); top: auto; right: 0; left: 0; min-width: unset; }
-      #mob-crono, #mob-colori { bottom: calc(44px + env(safe-area-inset-bottom, 0px)); top: 54px; }
-    }
-
-    /* ── DARK MODE ─────────────────────────────────────────────────────────── */
-    #bdark {
-      font-size: 13px; letter-spacing: 0; padding: 0 10px;
-      opacity: 0.45; transition: opacity 0.12s;
-    }
-    #bdark:hover { opacity: 1; }
-
-    html.dark { color-scheme: dark; }
-    html.dark body { background: #111110; color: #e8e6e3; }
-    html.dark canvas { background: #111110; }
-    html.dark .logo-img { filter: invert(1); }
-
-    html.dark .meta { color: rgba(232,230,227,0.40); }
-    html.dark #hview-desc { color: rgba(232,230,227,0.30); }
-    html.dark .hb { color: rgba(232,230,227,0.40); }
-    html.dark .hb:hover { color: #e8e6e3; }
-    html.dark .hb.active { color: #e8e6e3; font-weight: 600; }
-    html.dark .tr-sep { background: rgba(255,255,255,0.12); }
-    html.dark .zt { color: rgba(232,230,227,0.35); }
-
-    html.dark #prog { background: #555; }
-    html.dark #tip { color: #e8e6e3; background: rgba(17,17,16,0.94); }
-
-    html.dark #lb-overlay { background: rgba(17,17,16,0.92); }
-    html.dark #lx { color: rgba(232,230,227,0.35); }
-    html.dark #lx:hover { color: #e8e6e3; }
-    html.dark #lc { color: rgba(232,230,227,0.28); }
-    html.dark .lb-arr { color: rgba(232,230,227,0.22); }
-    html.dark .lb-arr:hover { color: rgba(232,230,227,0.80); }
-    html.dark #lb-info { background: rgba(22,22,20,0.94); }
-    html.dark #lt { color: #e8e6e3; }
-    html.dark #lm { color: rgba(232,230,227,0.40); }
-    html.dark #ls { border-color: rgba(255,255,255,0.12); }
-
-    html.dark #ov { background: #111110; color: #444; }
-
-    html.dark #lv { background: #111110; }
-    html.dark .lvr { border-bottom-color: rgba(255,255,255,0.04); }
-    html.dark .lvr:hover, html.dark .lvr.pin { background: rgba(255,255,255,0.04); }
-    html.dark .lvy { color: rgba(232,230,227,0.28); }
-    html.dark .lvt { color: #e8e6e3; }
-    html.dark .lvc { color: rgba(232,230,227,0.28); }
-    html.dark #lv-list { border-right-color: rgba(255,255,255,0.07); }
-    html.dark #lv-cap { color: rgba(232,230,227,0.32); }
-
-    html.dark #gv { background: #111110; }
-    html.dark #gv-grid { background: rgba(255,255,255,0.06); }
-    html.dark .gv-cell { background: #111110; }
-    html.dark .gv-num { color: rgba(232,230,227,0.22); }
-    html.dark .gv-sq { background: #252523; }
-    html.dark .gv-cell:hover .gv-sq::after { box-shadow: inset 0 0 0 2px #e8e6e3; }
-    html.dark .gv-year { color: rgba(232,230,227,0.32); }
-    html.dark .gv-cat  { color: rgba(232,230,227,0.22); }
-
-    html.dark .about-panel { background: rgba(22,22,20,0.94); box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
-    html.dark .about-label { color: rgba(232,230,227,0.28); }
-    html.dark .about-inner p { color: rgba(232,230,227,0.72); }
-    html.dark .about-close { color: rgba(232,230,227,0.30); }
-    html.dark .about-close:hover { color: #e8e6e3; }
-
-    html.dark #fpanel { background: #1b1b19; border-color: rgba(255,255,255,0.09); }
-    html.dark .fp-cat { color: rgba(232,230,227,0.28); }
-    html.dark .fp-cat:hover { color: rgba(232,230,227,0.65); }
-    html.dark .fp-cat.vis { color: #e8e6e3; }
-    html.dark .fp-all { color: rgba(232,230,227,0.28); border-top-color: rgba(255,255,255,0.06); }
-    html.dark .fp-all:hover { color: rgba(232,230,227,0.70); }
-
-    html.dark #mnav { background: rgba(17,17,16,0.97); border-top-color: rgba(255,255,255,0.08); }
-    html.dark .mnb { color: rgba(232,230,227,0.28); }
-    html.dark .mnb.active { color: #e8e6e3; }
-    html.dark .mnb + .mnb { border-left-color: rgba(255,255,255,0.06); }
-
-    html.dark #mob-crono { background: #111110; }
-    html.dark .mc-col { background: #111110; border-bottom-color: rgba(255,255,255,0.06); }
-    html.dark .mc-yhdr { color: rgba(232,230,227,0.26); }
-    html.dark .mc-items { background: rgba(255,255,255,0.06); }
-    html.dark .mc-cell { background: #111110; }
-    html.dark #mob-colori { background: #111110; }
-    html.dark #mob-colori-inner { background: rgba(255,255,255,0.06); }
-    html.dark .cc-cell { background: #111110; }
   </style>
 </head>
 <body>
@@ -422,7 +308,7 @@
 
 <div id="hud">
   <div class="tl">
-    <img src="/logo.svg" alt="Romanese" class="logo-img">
+    <img src="logo.svg" alt="Romanese" class="logo-img">
     <div class="tl-text">
       <div class="meta" id="hmeta"></div>
       <div id="hview-desc"></div>
@@ -441,8 +327,6 @@
     <button class="hb" id="bfiltro">Categorie</button>
     <div class="tr-sep"></div>
     <button class="hb" id="babout">About</button>
-    <div class="tr-sep"></div>
-    <button class="hb" id="bdark" title="Dark mode">◐</button>
   </div>
 </div>
 
@@ -551,7 +435,7 @@ function extractPosYear(p, seed) {
 const getCat   = p => p.split('/')[0];
 const getTitle = p => p.split('/').pop().replace(/\.[^.]+$/, '').replace(/^\[[\d\s:/]+\]\s*/, '').replace(/_+/g, ' ').trim();
 const imgUrl   = p => 'img/' + p.split('/').map(encodeURIComponent).join('/');
-const thumbUrl = p => imgUrl(p) + '?t=1';
+const thumbUrl = p => 'thumbs/' + (window._thumbHashes && window._thumbHashes[p] ? window._thumbHashes[p] : 'x') + '.jpg';
 function getSize(c, t) {
   const u = t.toUpperCase();
   if (u.includes('COPERTINA') || u.includes('COVER')) return 220;
@@ -560,7 +444,6 @@ function getSize(c, t) {
   return 148;
 }
 const CATS = {'DOCUMENTI':'Documenti','FOTO POLAROID':'Polaroid','FOTO SPARSE':'Fotografie','LIBRETTI':'Libretti','OGGETTI':'Oggetti','PORTAFOTO':'Portafoto'};
-const isDark = () => document.documentElement.classList.contains('dark');
 
 // Spread dal centroide: le foto si espandono proporzionalmente al zoom.
 // sp = sc / SC_MIN — invariante: al zoom minimo le foto sono alle posizioni originali.
@@ -654,65 +537,16 @@ const ctx = cv.getContext('2d', { alpha: false });
 const tip = document.getElementById('tip');
 let DPR = 1, VW = 0, VH = 0, mobileNavH = 0;
 
-let _prevMobile = null; // null = prima chiamata
-
 function resize() {
   DPR = window.devicePixelRatio || 1;
   VW  = window.innerWidth;
   VH  = window.innerHeight;
-
-  // mobileNavH: legge l'altezza effettiva renderizzata (funziona anche in landscape phone)
-  const mnavEl = document.getElementById('mnav');
-  mobileNavH = (mnavEl && mnavEl.offsetHeight > 0) ? mnavEl.offsetHeight : 0;
-
-  // Ricalcola coordinate e fit su cambio portrait ↔ landscape
-  const nowMobile = VW < 768;
-  if (_prevMobile !== null && _prevMobile !== nowMobile && items.length) {
-    const cx0 = items.reduce((s, it) => s + (it.bx + it.jx), 0) / items.length;
-    const cy0 = items.reduce((s, it) => s + (it.by + it.jy), 0) / items.length;
-    if (nowMobile) {
-      // Portrait: ruota anno→Y, colore→X
-      items.forEach(it => {
-        const dx = (it.bx + it.jx) - cx0;
-        const dy = (it.by + it.jy) - cy0;
-        it.mx = CW / 2 + dy * 0.40;
-        it.my = CH / 2 + dx * 0.70;
-      });
-      const sc1 = 0.30;
-      const mxR = (VW / 2) * SC_MIN / (sc1 * sc1) * 0.82;
-      const myR = ((VH - mobileNavH) / 2) * SC_MIN / (sc1 * sc1) * 0.80;
-      items.forEach(it => {
-        it.mx1 = CW / 2 + dj(it.rel_path, 5, mxR * 2);
-        it.my1 = CH / 2 + dj(it.rel_path, 6, myR * 2);
-      });
-      mode1InitSc = 0.30;
-    } else {
-      // Landscape/desktop: ripristina coordinate originali
-      items.forEach(it => {
-        it.mx  = it.bx + it.jx;
-        it.my  = it.by + it.jy;
-        it.mx1 = CW / 2 + dj(it.rel_path, 5, 2500);
-        it.my1 = CH / 2 + dj(it.rel_path, 6, 2000);
-      });
-      mode1InitSc = 0.18;
-    }
-    centX0 = items.reduce((s, it) => s + it.mx,  0) / items.length;
-    centY0 = items.reduce((s, it) => s + it.my,  0) / items.length;
-    centX1 = CW / 2;
-    centY1 = items.reduce((s, it) => s + it.my1, 0) / items.length;
-    centX = centX0; centY = centY0;
-    mode1InitTx = VW / 2 - centX1 * mode1InitSc;
-    mode1InitTy = (VH - mobileNavH) / 2 - centY1 * mode1InitSc;
-    fitAll();
-    sc = fitSc; tx = fitTx; ty = fitTy;
-    canvasZoomTarget = sc; vx = 0; vy = 0;
-    modeTarget = 0; sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
-    setActiveMode('bmappa');
-    // Chiudi pannelli HTML che appartengono solo al portrait mobile
-    if (!nowMobile) document.getElementById('mob-crono').classList.remove('open');
+  if (VW < 768) {
+    const mnavEl = document.getElementById('mnav');
+    mobileNavH = mnavEl ? (mnavEl.offsetHeight || 58) : 58;
+  } else {
+    mobileNavH = 0;
   }
-  _prevMobile = nowMobile;
-
   cv.width  = VW * DPR;
   cv.height = VH * DPR;
   cv.style.width  = VW + 'px';
@@ -816,9 +650,8 @@ function startReveal() {
 
 // ── RENDER SFERA ──────────────────────────────────────────────────────────────
 function renderSphere(masterAlpha = 1) {
-  const dk = isDark();
   ctx.globalAlpha = masterAlpha;
-  ctx.fillStyle = dk ? '#111110' : '#f5f5f3';
+  ctx.fillStyle = '#f5f5f3';
   ctx.fillRect(0, 0, VW, VH);
   ctx.globalAlpha = 1;
 
@@ -849,7 +682,7 @@ function renderSphere(masterAlpha = 1) {
   {
     const chrono = proj.slice().sort((a, b) => (a.it.year || 9999) - (b.it.year || 9999));
     ctx.save();
-    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.11)' : 'rgba(0,0,0,0.13)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.13)';
     ctx.lineWidth = 0.5;
     ctx.globalAlpha = 0.6 * masterAlpha;
     ctx.beginPath();
@@ -893,7 +726,7 @@ function renderSphere(masterAlpha = 1) {
     if (bm) {
       ctx.drawImage(bm, sx - iw / 2 | 0, sy - ih / 2 | 0, iw, ih);
     } else {
-      ctx.fillStyle = it.hex || (dk ? '#2e2e2c' : '#d4d4d0');
+      ctx.fillStyle = it.hex || '#d4d4d0';
       ctx.fillRect(sx - iw / 2 | 0, sy - ih / 2 | 0, iw, ih);
     }
     ctx.globalAlpha = 1;
@@ -901,7 +734,7 @@ function renderSphere(masterAlpha = 1) {
   }
 
   if (hov) {
-    ctx.strokeStyle = dk ? '#e8e6e3' : '#111';
+    ctx.strokeStyle = '#111';
     ctx.lineWidth = Math.max(1.5, 3 * Math.min(sphZoom, 1));
     ctx.strokeRect(hov.sx - hov.iw / 2 + 0.5 | 0, hov.sy - hov.ih / 2 + 0.5 | 0, hov.iw - 1, hov.ih - 1);
   }
@@ -924,12 +757,10 @@ function projectSphere(it) {
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function render() {
-  const dk = isDark();
-
   // fast path: sfera completa
   if (sphereT > 0.998 && sphereTarget === 1) { renderSphere(1); return; }
 
-  ctx.fillStyle = dk ? '#111110' : '#f5f5f3';
+  ctx.fillStyle = '#f5f5f3';
   ctx.fillRect(0, 0, VW, VH);
 
   const mapAlpha = 1 - sphereT; // elementi solo-mappa sfumano uscendo
@@ -938,7 +769,7 @@ function render() {
   if (mapAlpha > 0.01 && VW >= 768) {
     ctx.save();
     ctx.globalAlpha = mapAlpha;
-    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.05)';
     ctx.lineWidth = 1;
     for (let y = 1960; y <= 2000; y += 5) {
       const x = toX(y) * sc + tx;
@@ -947,7 +778,7 @@ function render() {
     }
     const fs = Math.max(8, 200 * sc);
     ctx.font = `700 ${fs}px 'NHG','Helvetica Neue',Arial`;
-    ctx.fillStyle = dk ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
+    ctx.fillStyle = 'rgba(0,0,0,0.04)';
     ctx.textBaseline = 'top';
     for (let d = 1960; d <= 2000; d += 10) {
       const x = toX(d) * sc + tx;
@@ -966,23 +797,19 @@ function render() {
     ctx.textAlign = 'center';
     const barBot = VH - mobileNavH;
     const barY = barBot - 10;
-    ctx.fillStyle = dk ? 'rgba(17,17,16,0.92)' : 'rgba(245,245,243,0.92)';
+    ctx.fillStyle = 'rgba(245,245,243,0.92)';
     ctx.fillRect(0, barBot - 28, VW, 28);
-    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.15)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(0, barBot - 28); ctx.lineTo(VW, barBot - 28); ctx.stroke();
     for (let y = 1960; y <= 2000; y += 5) {
       const rawX = toX(y) * sc + tx;
       const onScreen = rawX >= 0 && rawX <= VW;
       const sx = Math.max(22, Math.min(VW - 22, rawX));
-      ctx.strokeStyle = onScreen
-        ? (dk ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.3)')
-        : (dk ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.1)');
+      ctx.strokeStyle = onScreen ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)';
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(sx, barBot - 28); ctx.lineTo(sx, barBot - 22); ctx.stroke();
-      ctx.fillStyle = onScreen
-        ? (dk ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.75)')
-        : (dk ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)');
+      ctx.fillStyle = onScreen ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.25)';
       ctx.fillText(y, sx, barY);
     }
     ctx.textAlign = 'left';
@@ -993,7 +820,7 @@ function render() {
   if (grigliaT > 0.01) {
     ctx.save();
     ctx.globalAlpha = grigliaT;
-    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.10)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.10)';
     ctx.lineWidth = 1;
     for (let i = 0; i <= catOrder.length; i++) {
       const y = (PY + i * GRID_ROW_H) * sc + ty;
@@ -1001,7 +828,7 @@ function render() {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(VW, y); ctx.stroke();
     }
     ctx.font = '500 9px \'NHG\',\'Helvetica Neue\',Arial';
-    ctx.fillStyle = dk ? 'rgba(255,255,255,0.35)' : '#999';
+    ctx.fillStyle = '#999';
     ctx.textBaseline = 'middle';
     catOrder.forEach((cat, i) => {
       const y = (PY + (i + 0.5) * GRID_ROW_H) * sc + ty;
@@ -1076,7 +903,7 @@ function render() {
     const chrono = proj.slice().sort((a, b) =>
       (a.it.year || 9999) - (b.it.year || 9999) || a.it.my - b.it.my);
     ctx.save();
-    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.10)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.10)';
     ctx.lineWidth = 0.5;
     ctx.globalAlpha = 0.55;
     ctx.beginPath();
@@ -1122,9 +949,9 @@ function render() {
     if (bm) {
       ctx.drawImage(bm, dix, diy, diw, dih);
     } else {
-      ctx.fillStyle = it.hex || (dk ? '#2e2e2c' : '#d4d4d0');
+      ctx.fillStyle = it.hex || '#d4d4d0';
       ctx.fillRect(dix, diy, diw, dih);
-      ctx.fillStyle = dk ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.18)';
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
       ctx.fillRect(dix, diy, diw, dih * 0.4);
     }
     ctx.globalAlpha = 1;
@@ -1132,7 +959,7 @@ function render() {
   }
 
   if (hov) {
-    ctx.strokeStyle = dk ? '#e8e6e3' : '#111';
+    ctx.strokeStyle = '#111';
     ctx.lineWidth = Math.max(1.5, 3 * Math.min(sc, 1));
     ctx.strokeRect(hov.ix + .5, hov.iy + .5, hov.iw - 1, (hov.ih || hov.iw) - 1);
   }
@@ -1248,17 +1075,13 @@ function tick() {
   for (let i = 0; i < items.length; i++) {
     const it = items[i];
     if (it.visible && it.alpha < 1) { it.alpha = Math.min(1, it.alpha + 0.055); dirty = true; }
-    const tfa = hiddenCats.size === 0 || !hiddenCats.has(it.cat) ? 1 : 0;
+    const tfa = hiddenCats.size === 0 || !hiddenCats.has(it.cat) ? 1 : 0.05;
     if (Math.abs(it.fa - tfa) > 0.004) { it.fa += (tfa - it.fa) * 0.12; dirty = true; }
     else it.fa = tfa;
   }
   // inertia pan — decelerazione fluida dopo il drag
   if (!drg && (Math.abs(vx) > 0.3 || Math.abs(vy) > 0.3)) {
     tx += vx; ty += vy;
-    const txPre = tx, tyPre = ty;
-    clampPan();
-    if (tx !== txPre) vx = 0;
-    if (ty !== tyPre) vy = 0;
     vx *= 0.88; vy *= 0.88;
     dirty = true;
   }
@@ -1709,20 +1532,6 @@ document.getElementById('fp-all').onclick = e => {
 };
 document.addEventListener('click', () => fpanel.classList.remove('open'));
 
-// ── DARK MODE ─────────────────────────────────────────────────────────────────
-document.getElementById('bdark').onclick = e => {
-  e.stopPropagation();
-  const nowDark = document.documentElement.classList.toggle('dark');
-  localStorage.setItem('romanese-theme', nowDark ? 'dark' : 'light');
-  dirty = true;
-};
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-  if (!localStorage.getItem('romanese-theme')) {
-    document.documentElement.classList.toggle('dark', e.matches);
-    dirty = true;
-  }
-});
-
 // ── HIT TEST ─────────────────────────────────────────────────────────────────
 function hitAt(mx, my) {
   if (grigliaT > 0.5) return hitAtGrid(mx, my);
@@ -2159,6 +1968,8 @@ async function init() {
   const data = await (await fetch('data.json')).json();
   const raw  = (data.items || []).filter(d => !d.error);
 
+  window._thumbHashes = {};
+  raw.forEach(d => { if (d.thumbHash) window._thumbHashes[d.rel_path] = d.thumbHash; });
   items = raw.map((it, i) => {
     const yr = extractYear(it.rel_path);
     const c  = getCat(it.rel_path);
