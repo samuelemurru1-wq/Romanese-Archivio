@@ -756,7 +756,7 @@ function renderSphere(masterAlpha = 1) {
     if (iw < 1 || ih < 1) continue;
     const fog = z2 > 0 ? Math.max(0.1, 1 - z2 * 0.85) : 1.0;
     const a = it.alpha * fog * masterAlpha * it.fa;
-    if (a < 0.04) continue;
+    if (a < 0.02) continue;
     // cull fuori schermo
     if (sx + iw / 2 < 0 || sx - iw / 2 > VW || sy + ih / 2 < 0 || sy - ih / 2 > VH) continue;
 
@@ -1131,7 +1131,7 @@ function tick() {
   for (let i = 0; i < items.length; i++) {
     const it = items[i];
     if (it.visible && it.alpha < 1) { it.alpha = Math.min(1, it.alpha + 0.055); dirty = true; }
-    const tfa = hiddenCats.size === 0 || !hiddenCats.has(it.cat) ? 1 : 0;
+    const tfa = hiddenCats.size === 0 || !hiddenCats.has(it.cat) ? 1 : 0.05;
     if (Math.abs(it.fa - tfa) > 0.004) { it.fa += (tfa - it.fa) * 0.12; dirty = true; }
     else it.fa = tfa;
   }
