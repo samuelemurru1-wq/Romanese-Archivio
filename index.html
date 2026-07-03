@@ -422,7 +422,7 @@
 
 <div id="hud">
   <div class="tl">
-    <img src="logo.svg" alt="Romanese" class="logo-img">
+    <img src="/logo.svg" alt="Romanese" class="logo-img">
     <div class="tl-text">
       <div class="meta" id="hmeta"></div>
       <div id="hview-desc"></div>
@@ -550,8 +550,8 @@ function extractPosYear(p, seed) {
 }
 const getCat   = p => p.split('/')[0];
 const getTitle = p => p.split('/').pop().replace(/\.[^.]+$/, '').replace(/^\[[\d\s:/]+\]\s*/, '').replace(/_+/g, ' ').trim();
-const imgUrl   = p => 'img/' + p.split('/').map(encodeURIComponent).join('/');
-const thumbUrl = p => 'thumbs/' + (window._thumbHashes && window._thumbHashes[p] ? window._thumbHashes[p] : 'x') + '.jpg';
+const imgUrl   = p => '/img/' + p.split('/').map(encodeURIComponent).join('/');
+const thumbUrl = p => imgUrl(p) + '?t=1';
 function getSize(c, t) {
   const u = t.toUpperCase();
   if (u.includes('COPERTINA') || u.includes('COVER')) return 220;
@@ -1248,13 +1248,17 @@ function tick() {
   for (let i = 0; i < items.length; i++) {
     const it = items[i];
     if (it.visible && it.alpha < 1) { it.alpha = Math.min(1, it.alpha + 0.055); dirty = true; }
-    const tfa = hiddenCats.size === 0 || !hiddenCats.has(it.cat) ? 1 : 0.05;
+    const tfa = hiddenCats.size === 0 || !hiddenCats.has(it.cat) ? 1 : 0;
     if (Math.abs(it.fa - tfa) > 0.004) { it.fa += (tfa - it.fa) * 0.12; dirty = true; }
     else it.fa = tfa;
   }
   // inertia pan — decelerazione fluida dopo il drag
   if (!drg && (Math.abs(vx) > 0.3 || Math.abs(vy) > 0.3)) {
     tx += vx; ty += vy;
+    const txPre = tx, tyPre = ty;
+    clampPan();
+    if (tx !== txPre) vx = 0;
+    if (ty !== tyPre) vy = 0;
     vx *= 0.88; vy *= 0.88;
     dirty = true;
   }
@@ -2152,11 +2156,9 @@ document.getElementById('lb').addEventListener('touchend', e => {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init() {
-  const data = await (await fetch('data.json')).json();
+  const data = await (await fetch('/data.json')).json();
   const raw  = (data.items || []).filter(d => !d.error);
 
-  window._thumbHashes = {};
-  raw.forEach(d => { if (d.thumbHash) window._thumbHashes[d.rel_path] = d.thumbHash; });
   items = raw.map((it, i) => {
     const yr = extractYear(it.rel_path);
     const c  = getCat(it.rel_path);
