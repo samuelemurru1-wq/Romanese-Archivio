@@ -357,7 +357,7 @@
     html.dark .about-inner a { color: #e8e6e3; }
     html.dark #prog { background: #e8e6e3; }
   </style>
-  <script>(function(){var t=localStorage.getItem('romanese-theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');})()</script>
+  <script>(function(){var t=localStorage.getItem('romanese-theme');if(t==='dark')document.documentElement.classList.add('dark');})()</script>
 </head>
 <body>
 
@@ -1801,7 +1801,7 @@ document.getElementById('bdark').onclick = e => {
   dirty = true;
 };
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-  if (!localStorage.getItem('romanese-theme')) {
+  if (false) {
     document.documentElement.classList.toggle('dark', e.matches);
     dirty = true;
   }
