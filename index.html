@@ -22,6 +22,7 @@
       position: fixed; top: 0; left: 0; right: 0; height: 54px;
       background: none; border-bottom: none;
       pointer-events: none; z-index: 50;
+      opacity: 0;
     }
 
     /* identity — sinistra */
@@ -580,11 +581,19 @@ let sphZoom = 1, sphZoomTarget = 1, sphZoomStable = 0;
 let canvasZoomTarget = SC_MIN, canvasPivotX = 0, canvasPivotY = 0;
 
 // ── INTRO ─────────────────────────────────────────────────────────────────────
-let introPhase = 0; // 0=off, 1=scatter
+let introPhase = 0; // 0=done, 1=flash, 2=scatter, 3=mapin
 let introT = 0;
+let introFadeT = 0;
+let renderFadeT = 1; // 1=normale, <1=breve velo di sfondo post-intro
 let introDelays = [];
-const INTRO_SPD = 0.016;       // velocità globale (~60 frame = 1s per l'ultimo item)
-const INTRO_DELAY_MAX = 0.45;  // stagger massimo per item (in unità di introT)
+let introChronoOrder = [];
+let introDelayMap = new Map();
+let introFlashIdx = 0, introFlashBlend = 0, introFlashOrder = [];
+const INTRO_FLASH_COUNT = 10;
+const INTRO_FLASH_SPD = 1 / 9;  // 9 frame per foto (~150ms a 60fps)
+const INTRO_SPD = 0.013;
+const INTRO_DELAY_MAX = 0.55;
+const INTRO_FADE_SPD = 0.022;
 let sphRotX0 = 0, sphRotY0 = 0;
 
 // ── CANVAS ────────────────────────────────────────────────────────────────────
@@ -823,7 +832,7 @@ function render() {
   ctx.fillStyle = dk ? '#111111' : '#f5f5f3';
   ctx.fillRect(0, 0, VW, VH);
 
-  const mapAlpha = 1 - sphereT; // elementi solo-mappa sfumano uscendo
+  const mapAlpha = (1 - sphereT) * introFadeT; // sfumano con sfera e fade-in intro
 
   // griglie anni verticali (solo desktop — su mobile anno è sull'asse Y)
   if (mapAlpha > 0.01 && VW >= 768) {
@@ -982,7 +991,7 @@ function render() {
   }
 
   // ── disegna item ─────────────────────────────────────────────────────────────
-  if (sphereT > 0.005) { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; }
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
   let hov = null;
   for (const p of proj) {
     const { it, sx, sy, iw, ih, ix, iy } = p;
@@ -1031,53 +1040,258 @@ function render() {
 
 // ── RAF LOOP ──────────────────────────────────────────────────────────────────
 function startIntro() {
+  introFlashOrder = [...items].sort(() => Math.random() - 0.5);
+  introFlashIdx = 0; introFlashBlend = 0;
   introDelays = items.map(() => Math.random() * INTRO_DELAY_MAX);
-  introT = 0;
+  introDelayMap = new Map(items.map((it, i) => [it, introDelays[i]]));
+  introChronoOrder = [...items].sort((a, b) => (a.year || 9999) - (b.year || 9999) || a.my - b.my);
+  introT = 0; introFadeT = 0;
   introPhase = 1;
 }
 
-function renderIntro() {
-  ctx.fillStyle = isDark() ? '#111111' : '#f5f5f3';
+function renderIntroMapFade() {
+  const dk = isDark();
+  const f = introFadeT;
+
+  // 1. sfondo
+  ctx.fillStyle = dk ? '#111111' : '#f5f5f3';
   ctx.fillRect(0, 0, VW, VH);
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
+  // 2. griglie verticali anni (sotto le foto, come in render())
+  if (VW >= 768 && f > 0) {
+    ctx.save();
+    ctx.globalAlpha = f;
+    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+    ctx.lineWidth = 1;
+    for (let y = 1960; y <= 2000; y += 5) {
+      const x = toX(y) * sc + tx;
+      if (x < -1 || x > VW + 1) continue;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, VH); ctx.stroke();
+    }
+    const fs = Math.max(8, 200 * sc);
+    ctx.font = `700 ${fs}px 'NHG','Helvetica Neue',Arial`;
+    ctx.fillStyle = dk ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
+    ctx.textBaseline = 'top';
+    for (let d = 1960; d <= 2000; d += 10) {
+      const x = toX(d) * sc + tx;
+      if (x > VW + fs * 4 || x + fs * 4 < 0) continue;
+      ctx.fillText(d, x, PY * 0.25 * sc + ty);
+    }
+    ctx.restore();
+  }
+
+  // 3. barra date in basso (sotto le foto)
+  if (VW >= 768 && f > 0) {
+    ctx.save();
+    ctx.globalAlpha = f;
+    ctx.font = "600 11px 'NHG','Helvetica Neue',Arial";
+    ctx.textBaseline = 'bottom'; ctx.textAlign = 'center';
+    const barBot = VH - mobileNavH, barY = barBot - 10;
+    ctx.fillStyle = dk ? 'rgba(17,17,17,0.92)' : 'rgba(245,245,243,0.92)';
+    ctx.fillRect(0, barBot - 28, VW, 28);
+    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, barBot - 28); ctx.lineTo(VW, barBot - 28); ctx.stroke();
+    for (let y = 1960; y <= 2000; y += 5) {
+      const rawX = toX(y) * sc + tx;
+      const onScreen = rawX >= 0 && rawX <= VW;
+      const sx2 = Math.max(22, Math.min(VW - 22, rawX));
+      ctx.strokeStyle = dk ? (onScreen ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.12)') : (onScreen ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)');
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(sx2, barBot - 28); ctx.lineTo(sx2, barBot - 22); ctx.stroke();
+      ctx.fillStyle = dk ? (onScreen ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.28)') : (onScreen ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.25)');
+      ctx.fillText(y, sx2, barY);
+    }
+    ctx.textAlign = 'left';
+    ctx.restore();
+  }
+
+  // 4. linea cronologica identica a render()
+  {
+    ctx.save();
+    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
+    ctx.lineWidth = 0.5;
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    let first = true;
+    for (const it of introChronoOrder) {
+      const p = project(it);
+      if (first) { ctx.moveTo(p.sx, p.sy); first = false; }
+      else ctx.lineTo(p.sx, p.sy);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 5. foto alle posizioni finali — stesse coordinate intere di render()
+  const proj = [];
+  for (const it of items) {
+    if (!it.visible) continue;
+    const { sw, sh } = itemDims(it);
+    const p = project(it);
+    const iw = sw * sc * p.depth | 0;
+    const ih = sh * sc * p.depth | 0;
+    const ix = p.sx - iw / 2 | 0;
+    const iy = p.sy - ih / 2 | 0;
+    proj.push({ it, iw, ih, ix, iy, sortZ: getWz(it) });
+  }
+  proj.sort((a, b) => b.sortZ - a.sortZ);
+  for (const { it, iw, ih, ix, iy } of proj) {
+    if (iw < 1) continue;
+    ctx.globalAlpha = 1;
+    if (it.bm) ctx.drawImage(it.bm, ix, iy, iw, ih);
+    else { ctx.fillStyle = it.hex || '#ccc'; ctx.fillRect(ix, iy, iw, ih); }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawFlashPhoto(it, alpha) {
+  const aspect = it.aspect || 1;
+  const maxSide = Math.min(VW, VH) * 0.38;
+  const iw = (aspect >= 1 ? maxSide : maxSide * aspect) | 0;
+  const ih = (aspect >= 1 ? maxSide / aspect : maxSide) | 0;
+  ctx.globalAlpha = alpha;
+  if (it.bm) ctx.drawImage(it.bm, (VW / 2 - iw / 2) | 0, (VH / 2 - ih / 2) | 0, iw, ih);
+  else { ctx.fillStyle = it.hex || '#ccc'; ctx.fillRect((VW / 2 - iw / 2) | 0, (VH / 2 - ih / 2) | 0, iw, ih); }
+}
+
+function renderIntroFlash() {
+  const dk = isDark();
+  ctx.fillStyle = dk ? '#111111' : '#f5f5f3';
+  ctx.fillRect(0, 0, VW, VH);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
+  const b = introFlashBlend;
+  const fadeInEnd = 0.25, fadeOutStart = 0.72;
+  const currAlpha = b < fadeInEnd ? b / fadeInEnd
+    : b < fadeOutStart ? 1
+    : 1 - (b - fadeOutStart) / (1 - fadeOutStart);
+  const nextAlpha = b < fadeOutStart ? 0 : (b - fadeOutStart) / (1 - fadeOutStart);
+
+  drawFlashPhoto(introFlashOrder[introFlashIdx % introFlashOrder.length], currAlpha);
+  if (nextAlpha > 0.01)
+    drawFlashPhoto(introFlashOrder[(introFlashIdx + 1) % introFlashOrder.length], nextAlpha);
+  ctx.globalAlpha = 1;
+}
+
+function renderIntroScatter() {
+  const dk = isDark();
+  ctx.fillStyle = dk ? '#111111' : '#f5f5f3';
+  ctx.fillRect(0, 0, VW, VH);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
+  // linea cronologica — segmento parziale continuo (effetto penna)
+  const lineProgress = Math.max(0, Math.min(1, (introT - 0.2) / (1 + INTRO_DELAY_MAX - 0.2)));
+  if (lineProgress > 0 && introChronoOrder.length > 1) {
+    const totalPts = introChronoOrder.length;
+    const progressF = lineProgress * (totalPts - 1);
+    const fullIdx = Math.floor(progressF);
+    const partialT = progressF - fullIdx;
+
+    // calcola posizioni per tutti i punti visibili + il prossimo (parziale)
+    const pts = [];
+    for (let i = 0; i <= Math.min(fullIdx + 1, totalPts - 1); i++) {
+      const it = introChronoOrder[i];
+      const delay = introDelayMap.get(it) || 0;
+      const lt = Math.max(0, Math.min(1, introT - delay));
+      const et = 0.08 + 0.92 * (1 - Math.pow(1 - lt, 5));
+      const p = project(it);
+      pts.push({
+        sx: VW / 2 + (p.sx - VW / 2) * et,
+        sy: VH / 2 + (p.sy - VH / 2) * et
+      });
+    }
+
+    const lineAlpha = Math.min(1, lineProgress * 4) * 0.55;
+    ctx.save();
+    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
+    ctx.lineWidth = 0.5;
+    ctx.globalAlpha = lineAlpha;
+    ctx.beginPath();
+    for (let i = 0; i < pts.length; i++) {
+      if (i === 0) ctx.moveTo(pts[i].sx, pts[i].sy);
+      else if (i < pts.length - 1) ctx.lineTo(pts[i].sx, pts[i].sy);
+      else {
+        // ultimo segmento parziale
+        const prev = pts[i - 1];
+        const curr = pts[i];
+        ctx.lineTo(prev.sx + (curr.sx - prev.sx) * partialT, prev.sy + (curr.sy - prev.sy) * partialT);
+      }
+    }
+    ctx.stroke();
+
+    // punta luminosa che scorre lungo la linea
+    if (pts.length >= 2) {
+      const last = pts[pts.length - 1];
+      const prev = pts[pts.length - 2];
+      const tipX = prev.sx + (last.sx - prev.sx) * partialT;
+      const tipY = prev.sy + (last.sy - prev.sy) * partialT;
+      ctx.globalAlpha = lineAlpha * 2.5;
+      ctx.fillStyle = dk ? '#ffffff' : '#000000';
+      ctx.beginPath();
+      ctx.arc(tipX, tipY, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // foto
   for (let i = 0; i < items.length; i++) {
     const it = items[i];
     const lt = Math.max(0, Math.min(1, introT - introDelays[i]));
     if (lt === 0) continue;
-    const easedT = 1 - Math.pow(1 - lt, 3);
-    const alpha = Math.min(1, lt * 5);
+    const easedT = 1 - Math.pow(1 - lt, 5);
+    const alpha = Math.min(1, lt * 2);
     const { sw, sh } = itemDims(it);
     const p = project(it);
     const fw = sw * sc * p.depth, fh = sh * sc * p.depth;
     if (fw < 1) continue;
-    const iw = fw * easedT;
-    const ih = fh * easedT;
+    const spread = 0.08 + 0.92 * easedT;
+    const iw = fw * spread;
+    const ih = fh * spread;
     if (iw < 1) continue;
-    const sx = VW / 2 + (p.sx - VW / 2) * easedT;
-    const sy = VH / 2 + (p.sy - VH / 2) * easedT;
+    const sx = VW / 2 + (p.sx - VW / 2) * spread;
+    const sy = VH / 2 + (p.sy - VH / 2) * spread;
     ctx.globalAlpha = alpha;
-    if (it.bm) {
-      ctx.drawImage(it.bm, sx - iw / 2, sy - ih / 2, iw, ih);
-    } else {
-      ctx.fillStyle = it.hex || '#ccc';
-      ctx.fillRect(sx - iw / 2, sy - ih / 2, iw, ih);
-    }
+    if (it.bm) ctx.drawImage(it.bm, sx - iw / 2, sy - ih / 2, iw, ih);
+    else { ctx.fillStyle = it.hex || '#ccc'; ctx.fillRect(sx - iw / 2, sy - ih / 2, iw, ih); }
   }
   ctx.globalAlpha = 1;
 }
 
 function tick() {
   // ── intro animation ──────────────────────────────────────────────────────────
-  if (introPhase > 0) {
+  if (introPhase === 1) {
+    introFlashBlend += INTRO_FLASH_SPD;
+    if (introFlashBlend >= 1) {
+      introFlashBlend -= 1;
+      introFlashIdx++;
+      if (introFlashIdx >= INTRO_FLASH_COUNT) { introPhase = 2; introT = 0; }
+    }
+    renderIntroFlash();
+    requestAnimationFrame(tick);
+    return;
+  }
+  if (introPhase === 2) {
     introT += INTRO_SPD;
     if (introT >= 1 + INTRO_DELAY_MAX) {
-      introPhase = 0;
+      introPhase = 3;
       items.forEach(it => { it.visible = true; it.alpha = 1; });
-      dirty = true;
     }
-    renderIntro();
+    renderIntroScatter();
+    requestAnimationFrame(tick);
+    return;
+  }
+  if (introPhase === 3) {
+    introFadeT = Math.min(1, introFadeT + INTRO_FADE_SPD);
+    const hudEl = document.getElementById('hud');
+    if (hudEl) hudEl.style.opacity = introFadeT.toFixed(3);
+    if (introFadeT >= 1) { introPhase = 0; renderFadeT = 0; dirty = true; }
+    renderIntroMapFade();
     requestAnimationFrame(tick);
     return;
   }
@@ -1193,6 +1407,14 @@ function tick() {
     }
   }
   if (dirty) { render(); dirty = false; }
+  if (renderFadeT < 1) {
+    renderFadeT = Math.min(1, renderFadeT + 0.07);
+    ctx.fillStyle = isDark() ? '#111111' : '#f5f5f3';
+    ctx.globalAlpha = (1 - renderFadeT) * 0.85;
+    ctx.fillRect(0, 0, VW, VH);
+    ctx.globalAlpha = 1;
+    dirty = true;
+  }
   requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
@@ -2146,6 +2368,8 @@ async function init() {
     introStarted = true;
     items.forEach(it => { it.visible = true; it.alpha = 1; });
     document.getElementById('prog').style.opacity = '0';
+    introFadeT = 1;
+    document.getElementById('hud').style.opacity = '1';
     const ov2 = document.getElementById('ov');
     ov2.style.opacity = '0';
     setTimeout(() => { ov2.style.display = 'none'; setActiveMode('bmappa'); }, 150);
