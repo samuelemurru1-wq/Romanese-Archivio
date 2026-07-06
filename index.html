@@ -580,13 +580,11 @@ let sphZoom = 1, sphZoomTarget = 1, sphZoomStable = 0;
 let canvasZoomTarget = SC_MIN, canvasPivotX = 0, canvasPivotY = 0;
 
 // ── INTRO ─────────────────────────────────────────────────────────────────────
-let introPhase = 0; // 0=off, 1=flash, 2=scatter
-let introFlashIdx = 0, introFlashHold = 0, introScatterT = 0;
-let introFlashOrder = [];
-const INTRO_FLASH_SIZE = 240;   // px max-side durante il flash
-const INTRO_FLASH_COUNT = 12;   // quante immagini lampeggiare
-const INTRO_FLASH_HOLD = 5;     // frame per immagine (~83ms a 60fps) → 1s flash
-const INTRO_SCATTER_SPD = 0.018; // velocità scatter (~56 frame = 0.9s)
+let introPhase = 0; // 0=off, 1=scatter
+let introT = 0;
+let introDelays = [];
+const INTRO_SPD = 0.016;       // velocità globale (~60 frame = 1s per l'ultimo item)
+const INTRO_DELAY_MAX = 0.45;  // stagger massimo per item (in unità di introT)
 let sphRotX0 = 0, sphRotY0 = 0;
 
 // ── CANVAS ────────────────────────────────────────────────────────────────────
@@ -1033,19 +1031,8 @@ function render() {
 
 // ── RAF LOOP ──────────────────────────────────────────────────────────────────
 function startIntro() {
-  introFlashOrder = [...items].sort(() => Math.random() - 0.5);
-  // precarica full-res per le prime N foto del flash → nitide su Retina
-  introFlashOrder.slice(0, INTRO_FLASH_COUNT).forEach(it => {
-    if (it.fullBm || it.fullLoading) return;
-    it.fullLoading = true;
-    const img = new Image();
-    img.onload = () => {
-      mkBitmap(img).then(bm => { it.fullBm = bm; it.fullLoading = false; dirty = true; });
-    };
-    img.onerror = () => { it.fullLoading = false; };
-    img.src = it.url;
-  });
-  introFlashIdx = 0; introFlashHold = 0; introScatterT = 0;
+  introDelays = items.map(() => Math.random() * INTRO_DELAY_MAX);
+  introT = 0;
   introPhase = 1;
 }
 
@@ -1055,66 +1042,40 @@ function renderIntro() {
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
-  if (introPhase === 1) {
-    const it = introFlashOrder[introFlashIdx % introFlashOrder.length];
-    const aspect = it.aspect || 1;
-    const iw = (aspect >= 1 ? INTRO_FLASH_SIZE : INTRO_FLASH_SIZE * aspect) | 0;
-    const ih = (aspect >= 1 ? INTRO_FLASH_SIZE / aspect : INTRO_FLASH_SIZE) | 0;
-    ctx.globalAlpha = 1;
-    const bm = it.fullBm || it.bm;
-    if (bm) {
-      ctx.drawImage(bm, (VW / 2 - iw / 2) | 0, (VH / 2 - ih / 2) | 0, iw, ih);
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    const lt = Math.max(0, Math.min(1, introT - introDelays[i]));
+    if (lt === 0) continue;
+    const easedT = 1 - Math.pow(1 - lt, 3);
+    const alpha = Math.min(1, lt * 5);
+    const { sw, sh } = itemDims(it);
+    const p = project(it);
+    const fw = sw * sc * p.depth, fh = sh * sc * p.depth;
+    if (fw < 1) continue;
+    const iw = fw * easedT;
+    const ih = fh * easedT;
+    if (iw < 1) continue;
+    const sx = VW / 2 + (p.sx - VW / 2) * easedT;
+    const sy = VH / 2 + (p.sy - VH / 2) * easedT;
+    ctx.globalAlpha = alpha;
+    if (it.bm) {
+      ctx.drawImage(it.bm, sx - iw / 2, sy - ih / 2, iw, ih);
     } else {
       ctx.fillStyle = it.hex || '#ccc';
-      ctx.fillRect((VW / 2 - iw / 2) | 0, (VH / 2 - ih / 2) | 0, iw, ih);
+      ctx.fillRect(sx - iw / 2, sy - ih / 2, iw, ih);
     }
-  } else if (introPhase === 2) {
-    const t = 1 - Math.pow(1 - introScatterT, 2.5);
-    const alpha = Math.min(1, introScatterT * 2.5);
-    for (const it of items) {
-      const { sw, sh } = itemDims(it);
-      const p = project(it);
-      const fw = sw * sc * p.depth, fh = sh * sc * p.depth;
-      if (fw < 1) continue;
-      const aspect = it.aspect || 1;
-      const sw0 = aspect >= 1 ? INTRO_FLASH_SIZE : INTRO_FLASH_SIZE * aspect;
-      const sh0 = aspect >= 1 ? INTRO_FLASH_SIZE / aspect : INTRO_FLASH_SIZE;
-      const iw = (sw0 + (fw - sw0) * t) | 0;
-      const ih = (sh0 + (fh - sh0) * t) | 0;
-      if (iw < 1) continue;
-      const sx = (VW / 2 + (p.sx - VW / 2) * t) | 0;
-      const sy = (VH / 2 + (p.sy - VH / 2) * t) | 0;
-      ctx.globalAlpha = alpha;
-      if (it.bm) {
-        ctx.drawImage(it.bm, sx - iw / 2, sy - ih / 2, iw, ih);
-      } else {
-        ctx.fillStyle = it.hex || '#ccc';
-        ctx.fillRect(sx - iw / 2, sy - ih / 2, iw, ih);
-      }
-    }
-    ctx.globalAlpha = 1;
   }
+  ctx.globalAlpha = 1;
 }
 
 function tick() {
   // ── intro animation ──────────────────────────────────────────────────────────
   if (introPhase > 0) {
-    if (introPhase === 1) {
-      introFlashHold++;
-      if (introFlashHold >= INTRO_FLASH_HOLD) {
-        introFlashHold = 0;
-        introFlashIdx++;
-        if (introFlashIdx >= INTRO_FLASH_COUNT) {
-          introPhase = 2; introScatterT = 0;
-        }
-      }
-    } else if (introPhase === 2) {
-      introScatterT = Math.min(1, introScatterT + INTRO_SCATTER_SPD);
-      if (introScatterT >= 1) {
-        introPhase = 0;
-        items.forEach(it => { it.visible = true; it.alpha = 1; });
-        dirty = true;
-      }
+    introT += INTRO_SPD;
+    if (introT >= 1 + INTRO_DELAY_MAX) {
+      introPhase = 0;
+      items.forEach(it => { it.visible = true; it.alpha = 1; });
+      dirty = true;
     }
     renderIntro();
     requestAnimationFrame(tick);
