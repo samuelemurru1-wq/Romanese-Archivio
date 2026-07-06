@@ -603,7 +603,7 @@ const tip = document.getElementById('tip');
 let DPR = 1, VW = 0, VH = 0, mobileNavH = 0;
 
 function resize() {
-  DPR = window.devicePixelRatio || 1;
+  DPR = Math.min(window.devicePixelRatio || 1, 3);
   VW  = window.innerWidth;
   VH  = window.innerHeight;
   if (VW < 768) {
@@ -612,8 +612,8 @@ function resize() {
   } else {
     mobileNavH = 0;
   }
-  cv.width  = VW * DPR;
-  cv.height = VH * DPR;
+  cv.width  = Math.round(VW * DPR);
+  cv.height = Math.round(VH * DPR);
   cv.style.width  = VW + 'px';
   cv.style.height = VH + 'px';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
