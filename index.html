@@ -79,6 +79,24 @@
       letter-spacing: 0.04em; min-width: 34px;
       text-align: center; user-select: none;
     }
+
+    /* ── DARK TOGGLE ────────────────────────────────────────── */
+    #bdark {
+      position: relative; width: 30px; height: 17px;
+      background: rgba(0,0,0,0.12); border-radius: 9px;
+      border: none; cursor: pointer; padding: 0;
+      flex-shrink: 0; margin: 0 10px;
+      transition: background 0.2s;
+    }
+    #bdark::after {
+      content: ''; position: absolute;
+      width: 11px; height: 11px; border-radius: 50%;
+      background: #111; top: 3px; left: 3px;
+      transition: transform 0.2s;
+    }
+    html.dark #bdark { background: rgba(0,0,0,0.35); }
+    html.dark #bdark::after { transform: translateX(13px); background: #fff; }
+    html.dark #bdark::before { display: none; }
     #mcoord {
       position: fixed; bottom: 14px; right: 22px;
       font-size: 8.5px; color: #111;
@@ -383,7 +401,7 @@
     <button class="hb" id="bfiltro">Categorie</button>
     <div class="tr-sep"></div>
     <button class="hb" id="babout">About</button>
-    <button class="hb" id="bdark" title="Dark mode">◐</button>
+    <button id="bdark" title="Dark mode" aria-label="Dark mode"></button>
   </div>
 </div>
 
