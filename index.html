@@ -488,8 +488,8 @@ function extractPosYear(p, seed) {
   }
   // range tipo "68-70" → primo anno del range
   if ((m = p.match(/\b([6-9]\d)-\d{2}/))) return 1900 + +m[1];
-  // completamente sconosciuto → casuale su tutto il range
-  return Math.round(MNY + ((dj(p, seed, 2) + 1) / 2) * (MXY - MNY));
+  // completamente sconosciuto → cluster alla fine del range (zona "senza data")
+  return MXY - 2 + Math.round(dj(p, seed, 2) * 1.5);
 }
 const getCat   = p => p.split('/')[0];
 const getTitle = p => p.split('/').pop().replace(/\.[^.]+$/, '').replace(/^\[[\d\s:/]+\]\s*/, '').replace(/_+/g, ' ').trim();
