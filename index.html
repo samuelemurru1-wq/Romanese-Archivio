@@ -6,12 +6,12 @@
   <title>Romanese — Archivio</title>
   <link rel="icon" type="image/png" href="favicon.png">
   <style>
-    @font-face { font-family: 'NHG'; font-weight: 700; font-style: normal; src: local('NeueHaasDisplay-Roman'), local('Neue Haas Grotesk Display Pro'); }
-    @font-face { font-family: 'NHG'; font-weight: 700; font-style: normal; src: local('NeueHaasDisplay-Medium'), local('Neue Haas Grotesk Display Pro Medium'); }
+    @font-face { font-family: 'NHG'; font-weight: 400; font-style: normal; src: local('NeueHaasDisplay-Roman'), local('Neue Haas Grotesk Display Pro'); }
+    @font-face { font-family: 'NHG'; font-weight: 500; font-style: normal; src: local('NeueHaasDisplay-Medium'), local('Neue Haas Grotesk Display Pro Medium'); }
     @font-face { font-family: 'NHG'; font-weight: 700; font-style: normal; src: local('NeueHaasDisplay-Bold'), local('Neue Haas Grotesk Display Pro Bold'); }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #f5f5f3; }
-    body { font-family: 'NHG','Helvetica Neue',Arial,sans-serif; font-weight: 700; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; color: #111; }
+    body { font-family: 'NHG','Helvetica Neue',Arial,sans-serif; font-weight: 400; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; color: #111; }
 
     canvas { display: block; position: fixed; inset: 0; cursor: grab; }
     canvas.drag { cursor: grabbing; }
@@ -36,12 +36,12 @@
       height: 24px; width: auto; display: block;
     }
     .meta {
-      font-size: 8px; font-weight: 700;
+      font-size: 8px; font-weight: 400;
       letter-spacing: 0.12em; text-transform: uppercase;
       color: #111; line-height: 1;
     }
     #hview-desc {
-      font-size: 7px; font-weight: 700;
+      font-size: 7px; font-weight: 400;
       letter-spacing: 0.10em; text-transform: uppercase;
       color: #111; line-height: 1;
       transition: opacity 0.2s;
@@ -55,7 +55,7 @@
       pointer-events: auto;
     }
     .hb {
-      font-family: inherit; font-size: 9px; font-weight: 700;
+      font-family: inherit; font-size: 9px; font-weight: 500;
       letter-spacing: 0.18em; text-transform: uppercase;
       color: #111; background: none; border: none;
       padding: 0 11px; height: 54px;
@@ -900,7 +900,7 @@ function render() {
       if (y < -2 || y > VH + 2) continue;
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(VW, y); ctx.stroke();
     }
-    ctx.font = '700 9px \'NHG\',\'Helvetica Neue\',Arial';
+    ctx.font = '500 9px \'NHG\',\'Helvetica Neue\',Arial';
     ctx.fillStyle = dk ? 'rgba(232,230,227,0.35)' : '#999';
     ctx.textBaseline = 'middle';
     catOrder.forEach((cat, i) => {
