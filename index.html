@@ -225,14 +225,17 @@
       html.dark #hud {
         background: linear-gradient(to bottom, rgba(17,17,17,0.94) 0%, rgba(17,17,17,0.94) 75%, rgba(17,17,17,0) 100%);
       }
-      .tl { left: 14px; }
-      .logo-img { height: 18px; }
+      #hud { display: flex; align-items: stretch; }
+      .tl { position: static; left: auto; right: auto; padding-left: 14px; flex: 1 1 auto; min-width: 0; }
+      .tl-text { min-width: 0; }
+      .meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+      .logo-img { height: 18px; flex-shrink: 0; }
       #hview-desc { display: none; }
       .tr .hb:not(#bfiltro):not(#babout):not(#bdark) { display: none; }
       .tr .tr-sep { display: none; }
       .tr .zt { display: none; }
       #mcoord { display: none !important; }
-      .tr { overflow: visible; max-width: unset; padding-right: 10px; }
+      .tr { position: static; overflow: visible; max-width: unset; padding-right: 10px; flex: 0 0 auto; }
 
       /* bottom nav */
       #mnav {
@@ -407,7 +410,7 @@
     <button class="hb" id="bsfera">Sfera</button>
     <div class="tr-sep"></div>
     <span class="zt" id="zt">0%</span>
-    <button class="hb" id="bfiltro">Categorie</button>
+    <button class="hb" id="bfiltro">Filtri</button>
     <div class="tr-sep"></div>
     <button class="hb" id="babout">About</button>
     <button id="bdark" title="Dark mode" aria-label="Dark mode"></button>
