@@ -602,6 +602,7 @@ let lastPX = 0, lastPY = 0, lastPT = 0;
 let pd = null;
 let inFlight = 0, loadQueue = [];
 let sphInFlight = 0;
+let fullImgInFlight = 0;
 let sphereMode = false;
 let sphereT = 0, sphereTarget = 0;
 let grigliaT = 0, grigliaTarget = 0; // 0 = mappa/profondità, 1 = sfera — lerp
@@ -1034,17 +1035,19 @@ function render() {
     if (a < 0.03) continue;
 
     // LOD mappa (non durante transizione verso sfera)
-    if (sphereT < 0.1 && Math.max(iw, ih) > 100 && !it.fullBm && !it.fullLoading) {
+    const lodPx = Math.max(iw, ih) * DPR;
+    if (sphereT < 0.1 && lodPx > 150 && !it.fullBm && !it.fullLoading && fullImgInFlight < 4) {
       it.fullLoading = true;
+      fullImgInFlight++;
       const img = new Image();
       img.onload = () => {
-        mkBitmap(img).then(bm => { it.fullBm = bm; it.fullLoading = false; dirty = true; });
+        mkBitmap(img).then(bm => { it.fullBm = bm; it.fullLoading = false; fullImgInFlight--; dirty = true; });
       };
-      img.onerror = () => { it.fullLoading = false; };
+      img.onerror = () => { it.fullLoading = false; fullImgInFlight--; };
       img.src = it.url;
     }
 
-    const bm = (Math.max(iw, ih) > 100 && it.fullBm) ? it.fullBm : it.bm;
+    const bm = (lodPx > 150 && it.fullBm) ? it.fullBm : it.bm;
     ctx.globalAlpha = a;
     const sc2 = bm ? 1 : (0.82 + a * 0.18);
     const diw = iw * sc2 | 0, dih = ih * sc2 | 0;
@@ -1645,7 +1648,7 @@ function buildCronoView() {
       const cell = document.createElement('div');
       cell.className = 'mc-cell';
       const img = document.createElement('img');
-      img.dataset.src = it.thumbSrc;
+      img.dataset.src = it.url;
       img.alt = '';
       cell.appendChild(img);
       cell.onclick = () => openLB(it.idx);
@@ -1665,7 +1668,7 @@ function buildCronoView() {
       img.onload = () => img.classList.add('vis');
       obs.unobserve(img);
     }
-  }, { root: cronoCt, rootMargin: '0px 400px' });
+  }, { root: cronoCt, rootMargin: '400px 0px' });
   el.querySelectorAll('img[data-src]').forEach(img => obs.observe(img));
 }
 
@@ -1678,14 +1681,6 @@ function goMobCrono() {
   sphereMode = false; sphereTarget = 0; dirty = true;
   setActiveMode('bmappa');
   if (items.length) buildCronoView();
-  // fallback: forza caricamento immagini visibili se observer non ha sparato
-  setTimeout(() => {
-    document.getElementById('mob-crono-inner').querySelectorAll('img[data-src]').forEach(img => {
-      img.src = img.dataset.src;
-      img.onload = () => img.classList.add('vis');
-      img.removeAttribute('data-src');
-    });
-  }, 800);
 }
 
 // ── MOBILE: COLORI (Colore) ───────────────────────────────────────────────
@@ -1696,7 +1691,7 @@ function buildColoriView() {
     const cell = document.createElement('div');
     cell.className = 'cc-cell';
     const img = document.createElement('img');
-    img.dataset.src = it.thumbSrc;
+    img.dataset.src = it.url;
     img.alt = '';
     cell.appendChild(img);
     cell.onclick = () => openLB(it.idx);
@@ -1724,13 +1719,6 @@ function goMobColori() {
   sphereMode = false; sphereTarget = 0; dirty = true;
   setActiveMode('bprofondita');
   if (items.length) buildColoriView();
-  setTimeout(() => {
-    document.getElementById('mob-colori-inner').querySelectorAll('img[data-src]').forEach(img => {
-      img.src = img.dataset.src;
-      img.onload = () => img.classList.add('vis');
-      img.removeAttribute('data-src');
-    });
-  }, 800);
 }
 
 function buildGridView() {
