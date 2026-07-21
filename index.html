@@ -2031,7 +2031,32 @@ function getItemScreenRect(it) {
 function openLB(idx, originRect) {
   if (lbClosing) return;
   dIdx = idx;
-  dItems = [...items].sort((a, b) => a.mx - b.mx);
+  if (document.getElementById('gv').classList.contains('open')) {
+    dItems = [...items]
+      .filter(it => !hiddenCats.has(it.cat))
+      .sort((a, b) => {
+        if (!a.year && !b.year) return 0;
+        if (!a.year) return 1; if (!b.year) return -1;
+        return a.year - b.year || a.cat.localeCompare(b.cat);
+      });
+  } else if (document.getElementById('lv').classList.contains('open')) {
+    dItems = [...items]
+      .filter(it => !hiddenCats.has(it.cat))
+      .sort((a, b) => {
+        if (!a.year && !b.year) return 0;
+        if (!a.year) return 1; if (!b.year) return -1;
+        return a.year - b.year;
+      });
+  } else if (document.getElementById('mob-crono').classList.contains('open')) {
+    dItems = [...items].sort((a, b) => {
+      const ay = a.year || 9999, by2 = b.year || 9999;
+      return ay - by2 || (a.hue || 0) - (b.hue || 0);
+    });
+  } else if (document.getElementById('mob-colori').classList.contains('open')) {
+    dItems = [...items].sort((a, b) => (a.hue || 0) - (b.hue || 0));
+  } else {
+    dItems = [...items].sort((a, b) => a.mx - b.mx);
+  }
   lbOriginRect = originRect || null;
   showLB(idx, true);
 }
