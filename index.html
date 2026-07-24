@@ -517,6 +517,12 @@ function extractPosYear(p, seed) {
     const base = 1900 + +m[1];
     return base + Math.floor(((dj(p, seed, 2) + 1) / 2) * 10);
   }
+  // 90'S / 80'S / 00' → decennio
+  if ((m = p.match(/\b(\d{2})'[Ss]?/))) {
+    const d = +m[1];
+    const base = d >= 60 ? 1900 + d : 2000 + d;
+    return base + Math.floor(((dj(p, seed, 2) + 1) / 2) * 10);
+  }
   // range tipo "68-70" → primo anno del range
   if ((m = p.match(/\b([6-9]\d)-\d{2}/))) return 1900 + +m[1];
   // completamente sconosciuto → casuale su tutto il range
