@@ -432,6 +432,7 @@
   <button class="fp-cat vis" data-cat="FOTO POLAROID"><span class="fp-dot"></span>Polaroid</button>
   <button class="fp-cat vis" data-cat="FOTO SPARSE"><span class="fp-dot"></span>Fotografie</button>
   <button class="fp-cat vis" data-cat="LIBRETTI"><span class="fp-dot"></span>Libretti</button>
+  <button class="fp-cat vis" data-cat="MAGLIE"><span class="fp-dot"></span>Maglie</button>
   <button class="fp-cat vis" data-cat="OGGETTI"><span class="fp-dot"></span>Oggetti</button>
   <button class="fp-cat vis" data-cat="PORTAFOTO"><span class="fp-dot"></span>Portafoto</button>
   <button class="fp-all" id="fp-all">Mostra tutte</button>
@@ -532,13 +533,13 @@ function getSize(c, t) {
   if (c === 'OGGETTI')  return 110;
   return 148;
 }
-const CATS = {'DOCUMENTI':'Documenti','FOTO POLAROID':'Polaroid','FOTO SPARSE':'Fotografie','LIBRETTI':'Libretti','OGGETTI':'Oggetti','PORTAFOTO':'Portafoto'};
+const CATS = {'DOCUMENTI':'Documenti','FOTO POLAROID':'Polaroid','FOTO SPARSE':'Fotografie','LIBRETTI':'Libretti','MAGLIE':'Maglie','OGGETTI':'Oggetti','PORTAFOTO':'Portafoto'};
 
 // Spread dal centroide: le foto si espandono proporzionalmente al zoom.
 // sp = sc / SC_MIN — invariante: al zoom minimo le foto sono alle posizioni originali.
 let SC_MIN = 0.10;
 const FOCAL  = 1800;
-const catOrder = ['DOCUMENTI','FOTO POLAROID','FOTO SPARSE','LIBRETTI','OGGETTI','PORTAFOTO'];
+const catOrder = ['DOCUMENTI','FOTO POLAROID','FOTO SPARSE','LIBRETTI','MAGLIE','OGGETTI','PORTAFOTO'];
 const GRID_ROW_H = (CH - 2 * PY) / catOrder.length;
 const SPHERE_CAM_MUL = 4.5; // distanza camera = N × raggio sfera
 const SPHERE_ITEM_F  = 0.09; // dimensione foto = frazione del raggio sfera
