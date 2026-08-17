@@ -1277,7 +1277,6 @@ function buildCronoView() {
     el.appendChild(col);
   }
 
-  const cronoCt = document.getElementById('mob-crono');
   const obs = new IntersectionObserver(entries => {
     for (const e of entries) {
       if (!e.isIntersecting) continue;
@@ -1286,7 +1285,7 @@ function buildCronoView() {
       img.onload = () => img.classList.add('vis');
       obs.unobserve(img);
     }
-  }, { root: cronoCt, rootMargin: '0px 400px' });
+  }, { rootMargin: '400px 0px' });
   el.querySelectorAll('img[data-src]').forEach(img => obs.observe(img));
 }
 
