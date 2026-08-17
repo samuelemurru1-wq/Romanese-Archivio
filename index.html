@@ -1638,7 +1638,7 @@ function buildGridView() {
     const num = String(i + 1).padStart(3, '0');
     cell.innerHTML =
       `<span class="gv-num">${num}</span>` +
-      `<div class="gv-sq"><img data-src="${it.thumbSrc}" alt=""></div>` +
+      `<div class="gv-sq"><img data-src="${it.thumbSrc}" alt="" decoding="async"></div>` +
       `<div class="gv-info"><span class="gv-year">${it.year || '—'}</span><span class="gv-cat">${CATS[it.cat] || it.cat}</span></div>`;
     cell.addEventListener('click', () => openLB(it.idx));
     grid.appendChild(cell);
@@ -1651,7 +1651,7 @@ function buildGridView() {
       img.onload = () => img.classList.add('vis');
       obs.unobserve(img);
     }
-  }, { rootMargin: '300px' });
+  }, { rootMargin: '600px' });
   grid.querySelectorAll('img[data-src]').forEach(img => obs.observe(img));
 }
 
@@ -1857,7 +1857,7 @@ cv.addEventListener('touchmove', e => {
       dirty = true;
     } else {
       const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
-      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
         moved = true; tx = tx0 + dx; ty = ty0 + dy; clampPan(); dirty = true;
         const now = performance.now(), dt = now - lastPT;
         if (dt > 0 && dt < 80) {
