@@ -1046,7 +1046,7 @@ function tick() {
     const scFloor = modeTarget === 1 ? mode1InitSc : SC_MIN;
     const tgtTx   = modeTarget === 1 ? mode1InitTx : (grigliaT > 0.5 ? grigliaFloorTx : floorTx);
     const tgtTy   = modeTarget === 1 ? mode1InitTy : (grigliaT > 0.5 ? grigliaFloorTy : floorTy);
-    if (!drg && sc <= scFloor && fitSc > 0 && !(VW < 768 && modeTarget === 0)) {
+    if (!drg && sc <= scFloor && fitSc > 0) {
       const dx = tgtTx - tx, dy = tgtTy - ty;
       if (Math.abs(dx) > 0.2 || Math.abs(dy) > 0.2) {
         tx += dx * 0.07; ty += dy * 0.07;
@@ -1384,7 +1384,7 @@ document.getElementById('bmappa').onclick   = goMappa;
 document.getElementById('bgriglia').onclick = goGriglia;
 
 // mobile bottom nav
-document.getElementById('mb-mappa').onclick   = goMobCrono;
+document.getElementById('mb-mappa').onclick   = goMappa;
 document.getElementById('mb-griglia').onclick = goGriglia;
 
 // ── FILTRO CATEGORIE ──────────────────────────────────────────────────────────
@@ -1887,13 +1887,21 @@ async function init() {
   }
 
   if (VW < 768) {
-    // Mobile: mostra mob-crono subito, le thumbnail le carica IntersectionObserver
-    introStarted = true;
+    // Mobile: canvas map, thumbnail in background
+    setActiveMode('bmappa');
     items.forEach(it => { it.visible = true; it.alpha = 1; });
+    introStarted = true;
     document.getElementById('prog').style.opacity = '0';
     const ov2 = document.getElementById('ov');
     ov2.style.opacity = '0';
-    setTimeout(() => { ov2.style.display = 'none'; goMobCrono(); }, 150);
+    setTimeout(() => { ov2.style.display = 'none'; }, 150);
+    loadQueue = [...items].sort((a, b) => {
+      if (!a.year && !b.year) return 0;
+      if (!a.year) return 1;
+      if (!b.year) return -1;
+      return a.year - b.year;
+    });
+    processQueue();
   } else {
     // Desktop: intro parte subito dopo il caricamento dati, thumbnail in background
     setActiveMode('bmappa');
