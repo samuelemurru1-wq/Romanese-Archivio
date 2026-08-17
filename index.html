@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Romanese — Archivio</title>
-  <link rel="icon" type="image/png" href="favicon.png">
+  <script>(function(){var t=localStorage.getItem('romanese-theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');})();</script>
   <style>
     @font-face { font-family: 'NHG'; font-weight: 400; font-style: normal; src: local('NeueHaasDisplay-Roman'), local('Neue Haas Grotesk Display Pro'); }
     @font-face { font-family: 'NHG'; font-weight: 500; font-style: normal; src: local('NeueHaasDisplay-Medium'), local('Neue Haas Grotesk Display Pro Medium'); }
     @font-face { font-family: 'NHG'; font-weight: 700; font-style: normal; src: local('NeueHaasDisplay-Bold'), local('Neue Haas Grotesk Display Pro Bold'); }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #f5f5f3; }
-    body { font-family: 'NHG','Helvetica Neue',Arial,sans-serif; font-weight: 400; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; color: #111; }
+    body { font-family: 'NHG','Helvetica Neue',Arial,sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; color: #111; }
 
     canvas { display: block; position: fixed; inset: 0; cursor: grab; }
     canvas.drag { cursor: grabbing; }
@@ -22,7 +22,6 @@
       position: fixed; top: 0; left: 0; right: 0; height: 54px;
       background: none; border-bottom: none;
       pointer-events: none; z-index: 50;
-      opacity: 0;
     }
 
     /* identity — sinistra */
@@ -55,7 +54,7 @@
       pointer-events: auto;
     }
     .hb {
-      font-family: inherit; font-size: 9px; font-weight: 500;
+      font-family: inherit; font-size: 9px; font-weight: 400;
       letter-spacing: 0.18em; text-transform: uppercase;
       color: #111; background: none; border: none;
       padding: 0 11px; height: 54px;
@@ -64,7 +63,7 @@
       white-space: nowrap; user-select: none;
     }
     .hb:hover  { color: #111; }
-    .hb.active { color: #111; font-weight: 700; }
+    .hb.active { color: #111; font-weight: 600; }
 
     /* separatori verticali tra gruppi */
     .tr-sep {
@@ -78,30 +77,6 @@
       font-size: 8.5px; color: #111;
       letter-spacing: 0.04em; min-width: 34px;
       text-align: center; user-select: none;
-    }
-
-    /* ── DARK TOGGLE ────────────────────────────────────────── */
-    #bdark {
-      position: relative; width: 30px; height: 17px;
-      background: rgba(0,0,0,0.12); border-radius: 9px;
-      border: none; cursor: pointer; padding: 0;
-      flex-shrink: 0; margin: 0 10px;
-      transition: background 0.2s;
-    }
-    #bdark::after {
-      content: ''; position: absolute;
-      width: 11px; height: 11px; border-radius: 50%;
-      background: #111; top: 3px; left: 3px;
-      transition: transform 0.2s;
-    }
-    html.dark #bdark { background: rgba(255,255,255,0.25); }
-    html.dark #bdark::after { transform: translateX(13px); background: #fff; }
-    html.dark #bdark::before { display: none; }
-    #mcoord {
-      position: fixed; bottom: 14px; right: 22px;
-      font-size: 8.5px; color: #111;
-      letter-spacing: 0.04em; user-select: none;
-      white-space: nowrap; z-index: 50;
     }
 
     /* ── PROGRESS ───────────────────────────────────────────── */
@@ -161,22 +136,22 @@
       gap: 1px; background: rgba(0,0,0,0.08); padding: 0;
     }
     .gv-cell { background: #f5f5f3; cursor: pointer; position: relative; }
-    .gv-num { display: block; font-size: 11px; letter-spacing: 0.1em; color: #ccc; padding: 8px 8px 5px; font-variant-numeric: tabular-nums; }
+    .gv-num { display: block; font-size: 8px; letter-spacing: 0.1em; color: #ccc; padding: 7px 8px 4px; font-variant-numeric: tabular-nums; }
     .gv-sq { width: 100%; background: #e6e6e4; }
     .gv-sq img { width: 100%; height: auto; display: block; opacity: 0; transition: opacity .18s; }
     .gv-sq img.vis { opacity: 1; }
     .gv-sq::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 0 0px #111; transition: box-shadow .08s; pointer-events: none; }
     .gv-cell:hover .gv-sq::after { box-shadow: inset 0 0 0 2px #111; }
     .gv-info { padding: 4px 8px 9px; }
-    .gv-year { display: block; font-size: 11px; letter-spacing: 0.06em; color: #888; }
-    .gv-cat  { display: block; font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; color: #ccc; margin-top: 2px; }
+    .gv-year { display: block; font-size: 8px; letter-spacing: 0.06em; color: #888; }
+    .gv-cat  { display: block; font-size: 7px; letter-spacing: 0.13em; text-transform: uppercase; color: #ccc; margin-top: 1px; }
 
     /* ── ABOUT ──────────────────────────────────────────────── */
     #about { display: none; position: fixed; inset: 0; z-index: 46; background: transparent; align-items: center; justify-content: center; }
     #about.open { display: flex; }
     .about-panel { background: rgba(238,238,238,0.82); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 4px; border: none; box-shadow: 0 4px 24px rgba(0,0,0,0.06); max-width: 780px; width: calc(100% - 48px); padding: 48px; position: relative; }
     .about-label { display: block; font-size: 8px; letter-spacing: 0.22em; text-transform: uppercase; color: #bbb; margin-bottom: 28px; }
-    .about-inner p { font-size: 15px; line-height: 1.85; color: #222; margin-bottom: 1.5em; text-align: justify; text-align-last: left; hyphens: auto; -webkit-hyphens: auto; -ms-hyphens: auto; }
+    .about-inner p { font-size: 15px; line-height: 1.85; color: #222; margin-bottom: 1.5em; text-align: justify; }
     .about-inner p:last-child { margin-bottom: 0; }
     .about-close { position: absolute; top: 14px; right: 16px; height: 30px; padding: 0 12px; font-family: inherit; font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase; color: #bbb; background: none; border: none; cursor: pointer; transition: color .12s; display: flex; align-items: center; }
     .about-close:hover { color: #111; }
@@ -219,23 +194,13 @@
     /* ── MOBILE ─────────────────────────────────────────────── */
     @media (max-width: 768px) {
       /* top HUD: solo logo + filtro + about */
-      #hud {
-        background: linear-gradient(to bottom, rgba(245,245,243,0.94) 0%, rgba(245,245,243,0.94) 75%, rgba(245,245,243,0) 100%);
-      }
-      html.dark #hud {
-        background: linear-gradient(to bottom, rgba(17,17,17,0.94) 0%, rgba(17,17,17,0.94) 75%, rgba(17,17,17,0) 100%);
-      }
-      #hud { display: flex; align-items: stretch; }
-      .tl { position: static; left: auto; right: auto; padding-left: 14px; flex: 1 1 auto; min-width: 0; }
-      .tl-text { min-width: 0; }
-      .meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-      .logo-img { height: 18px; flex-shrink: 0; }
+      .tl { left: 14px; }
+      .logo-img { height: 18px; }
       #hview-desc { display: none; }
       .tr .hb:not(#bfiltro):not(#babout):not(#bdark) { display: none; }
       .tr .tr-sep { display: none; }
       .tr .zt { display: none; }
-      #mcoord { display: none !important; }
-      .tr { position: static; overflow: visible; max-width: unset; padding-right: 10px; flex: 0 0 auto; }
+      .tr { overflow: visible; max-width: unset; padding-right: 10px; }
 
       /* bottom nav */
       #mnav {
@@ -255,7 +220,7 @@
         background: none; border: none; cursor: pointer; transition: color 0.1s;
         white-space: nowrap;
       }
-      .mnb.active { color: #111; font-weight: 700; }
+      .mnb.active { color: #111; font-weight: 500; }
       .mnb + .mnb { border-left: 1px solid rgba(0,0,0,0.05); }
 
       /* overlays sopra la nav bar */
@@ -265,12 +230,11 @@
       #fpanel { bottom: calc(58px + env(safe-area-inset-bottom, 0px)); top: auto; right: 0; left: 0; min-width: unset; }
 
       /* griglia: 2 colonne fisse su mobile */
-      #gv-grid { grid-template-columns: repeat(3, 1fr); gap: 2px; }
-      .gv-num { font-size: 10px; padding: 6px 6px 4px; }
-      .gv-year, .gv-cat { font-size: 10px; }
+      #gv-grid { grid-template-columns: repeat(2, 1fr); gap: 2px; }
+      .gv-num { font-size: 7px; padding: 5px 6px 3px; }
 
       /* lista: full height, tap → lightbox */
-      #lv-list { width: 100%; height: 100%; flex-shrink: 0; border-right: none; border-bottom: none; overflow-y: auto; }
+      #lv-list { width: 100%; flex: 1; min-height: 0; border-right: none; border-bottom: none; overflow-y: auto; -webkit-overflow-scrolling: touch; }
       #lv-prev { display: none; }
 
       /* vista mappa orizzontale (Anno) */
@@ -338,56 +302,119 @@
       #tip { display: none !important; }
     }
 
-    /* ── DARK MODE ───────────────────────────────────────────── */
-    html.dark body { background: #111; color: #e8e6e3; }
-    html.dark canvas { background: #111; }
-    html.dark .meta, html.dark #hview-desc { color: #e8e6e3; }
-    html.dark .hb { color: rgba(232,230,227,0.6); }
-    html.dark .hb:hover { background: rgba(255,255,255,0.08); color: #e8e6e3; }
-    html.dark .hb.active { color: #e8e6e3; }
-    html.dark .tr-sep { background: rgba(255,255,255,0.1); }
-    html.dark .zt { color: rgba(232,230,227,0.5); }
-    html.dark #mcoord { color: rgba(232,230,227,0.5); }
+    /* ── Landscape phone (VH<500): mostra la nav e gli overlay mobili ──────── */
+    @media (orientation: landscape) and (max-height: 500px) {
+      #hview-desc { display: none; }
+      #tip { display: none !important; }
+      #mnav {
+        display: flex;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        height: calc(44px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        background: rgba(245,245,243,0.97);
+        border-top: 1px solid rgba(0,0,0,0.07);
+        z-index: 49; align-items: stretch;
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      }
+      .mnb {
+        flex: 1; display: flex; align-items: center; justify-content: center;
+        font-family: inherit; font-size: 7px; letter-spacing: 0.14em;
+        text-transform: uppercase; color: rgba(0,0,0,0.28);
+        background: none; border: none; cursor: pointer; transition: color 0.1s;
+        white-space: nowrap;
+      }
+      .mnb.active { color: #111; font-weight: 500; }
+      .mnb + .mnb { border-left: 1px solid rgba(0,0,0,0.05); }
+      #lv { bottom: calc(44px + env(safe-area-inset-bottom, 0px)); top: 54px; z-index: 50; flex-direction: column; }
+      #lv-list { flex: 1; min-height: 0; border-right: none; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+      #lv-prev { display: none; }
+      #gv { bottom: calc(44px + env(safe-area-inset-bottom, 0px)); top: 54px; z-index: 50; }
+      #gv-grid { grid-template-columns: repeat(4, 1fr); }
+      #fpanel { bottom: calc(44px + env(safe-area-inset-bottom, 0px)); top: auto; right: 0; left: 0; min-width: unset; }
+      #mob-crono, #mob-colori { bottom: calc(44px + env(safe-area-inset-bottom, 0px)); top: 54px; }
+    }
+
+    /* ── DARK MODE ─────────────────────────────────────────────────────────── */
+    #bdark {
+      font-size: 13px; letter-spacing: 0; padding: 0 10px;
+      opacity: 0.45; transition: opacity 0.12s;
+    }
+    #bdark:hover { opacity: 1; }
+
+    html.dark { color-scheme: dark; }
+    html.dark body { background: #111110; color: #e8e6e3; }
+    html.dark canvas { background: #111110; }
     html.dark .logo-img { filter: invert(1); }
+
+    html.dark .meta { color: rgba(232,230,227,0.40); }
+    html.dark #hview-desc { color: rgba(232,230,227,0.30); }
+    html.dark .hb { color: rgba(232,230,227,0.40); }
+    html.dark .hb:hover { color: #e8e6e3; }
+    html.dark .hb.active { color: #e8e6e3; font-weight: 600; }
+    html.dark .tr-sep { background: rgba(255,255,255,0.12); }
+    html.dark .zt { color: rgba(232,230,227,0.35); }
+
+    html.dark #prog { background: #555; }
+    html.dark #tip { color: #e8e6e3; background: rgba(17,17,16,0.94); }
+
+    html.dark #lb-overlay { background: rgba(17,17,16,0.92); }
+    html.dark #lx { color: rgba(232,230,227,0.35); }
+    html.dark #lx:hover { color: #e8e6e3; }
+    html.dark #lc { color: rgba(232,230,227,0.28); }
+    html.dark .lb-arr { color: rgba(232,230,227,0.22); }
+    html.dark .lb-arr:hover { color: rgba(232,230,227,0.80); }
+    html.dark #lb-info { background: rgba(22,22,20,0.94); }
+    html.dark #lt { color: #e8e6e3; }
+    html.dark #lm { color: rgba(232,230,227,0.40); }
+    html.dark #ls { border-color: rgba(255,255,255,0.12); }
+
+    html.dark #ov { background: #111110; color: #444; }
+
+    html.dark #lv { background: #111110; }
+    html.dark .lvr { border-bottom-color: rgba(255,255,255,0.04); }
+    html.dark .lvr:hover, html.dark .lvr.pin { background: rgba(255,255,255,0.04); }
+    html.dark .lvy { color: rgba(232,230,227,0.28); }
+    html.dark .lvt { color: #e8e6e3; }
+    html.dark .lvc { color: rgba(232,230,227,0.28); }
+    html.dark #lv-list { border-right-color: rgba(255,255,255,0.07); }
+    html.dark #lv-cap { color: rgba(232,230,227,0.32); }
+
+    html.dark #gv { background: #111110; }
+    html.dark #gv-grid { background: rgba(255,255,255,0.06); }
+    html.dark .gv-cell { background: #111110; }
+    html.dark .gv-num { color: rgba(232,230,227,0.22); }
+    html.dark .gv-sq { background: #252523; }
+    html.dark .gv-cell:hover .gv-sq::after { box-shadow: inset 0 0 0 2px #e8e6e3; }
+    html.dark .gv-year { color: rgba(232,230,227,0.32); }
+    html.dark .gv-cat  { color: rgba(232,230,227,0.22); }
+
+    html.dark .about-panel { background: rgba(22,22,20,0.94); box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
+    html.dark .about-label { color: rgba(232,230,227,0.28); }
+    html.dark .about-inner p { color: rgba(232,230,227,0.72); }
+    html.dark .about-close { color: rgba(232,230,227,0.30); }
+    html.dark .about-close:hover { color: #e8e6e3; }
+
     html.dark #fpanel { background: #1b1b19; border-color: rgba(255,255,255,0.09); }
     html.dark .fp-cat { color: rgba(232,230,227,0.28); }
     html.dark .fp-cat:hover { color: rgba(232,230,227,0.65); }
     html.dark .fp-cat.vis { color: #e8e6e3; }
-    html.dark .fp-all { color: rgba(232,230,227,0.35); }
-    html.dark #lv { background: #111; }
-    html.dark #lv-list { border-color: rgba(255,255,255,0.07); }
-    html.dark .lvr { border-color: rgba(255,255,255,0.05); color: #e8e6e3; }
-    html.dark .lvt { color: #e8e6e3; }
-    html.dark .lvr:hover { background: rgba(255,255,255,0.04); }
-    html.dark .lvr.pin { background: rgba(255,255,255,0.06); }
-    html.dark .lvy, html.dark .lvc { color: rgba(232,230,227,0.4); }
-    html.dark #lv-cap { color: rgba(232,230,227,0.35); }
-    html.dark #gv { background: #111; }
-    html.dark #gv-grid { background: rgba(255,255,255,0.05); }
-    html.dark .gv-cell { background: #111; }
-    html.dark .gv-sq { background: #222; }
-    html.dark .gv-num { color: rgba(232,230,227,0.4); }
-    html.dark .gv-year { color: rgba(232,230,227,0.55); }
-    html.dark .gv-cat { color: rgba(232,230,227,0.35); }
-    html.dark .gv-cell:hover .gv-sq::after { box-shadow: inset 0 0 0 2px #e8e6e3; }
-    html.dark #lb-overlay { background: rgba(17,17,17,0.92); }
-    html.dark #lx, html.dark .lb-arr { color: rgba(232,230,227,0.6); }
-    html.dark #lt, html.dark #lm { color: #e8e6e3; }
-    html.dark #lb-info { background: rgba(26,26,24,0.88); border-color: rgba(255,255,255,0.07); }
-    html.dark #lm { color: rgba(232,230,227,0.55); }
-    html.dark #mnav { background: rgba(17,17,17,0.97); border-color: rgba(255,255,255,0.07); }
+    html.dark .fp-all { color: rgba(232,230,227,0.28); border-top-color: rgba(255,255,255,0.06); }
+    html.dark .fp-all:hover { color: rgba(232,230,227,0.70); }
+
+    html.dark #mnav { background: rgba(17,17,16,0.97); border-top-color: rgba(255,255,255,0.08); }
     html.dark .mnb { color: rgba(232,230,227,0.28); }
     html.dark .mnb.active { color: #e8e6e3; }
-    html.dark .mnb + .mnb { border-color: rgba(255,255,255,0.05); }
-    html.dark #mob-crono, html.dark #mob-colori { background: #111; }
-    html.dark .mc-cell, html.dark .cc-cell { background: #111; }
-    html.dark .about-panel { background: rgba(28,28,26,0.97); color: #e8e6e3; box-shadow: 0 4px 32px rgba(0,0,0,0.5); }
-    html.dark .about-inner p { color: #d8d6d3; }
-    html.dark .about-label { color: rgba(232,230,227,0.45); }
-    html.dark .about-inner a { color: #e8e6e3; }
-    html.dark #prog { background: #e8e6e3; }
+    html.dark .mnb + .mnb { border-left-color: rgba(255,255,255,0.06); }
+
+    html.dark #mob-crono { background: #111110; }
+    html.dark .mc-col { background: #111110; border-bottom-color: rgba(255,255,255,0.06); }
+    html.dark .mc-yhdr { color: rgba(232,230,227,0.26); }
+    html.dark .mc-items { background: rgba(255,255,255,0.06); }
+    html.dark .mc-cell { background: #111110; }
+    html.dark #mob-colori { background: #111110; }
+    html.dark #mob-colori-inner { background: rgba(255,255,255,0.06); }
+    html.dark .cc-cell { background: #111110; }
   </style>
-  <script>(function(){var t=localStorage.getItem('romanese-theme');if(t==='dark')document.documentElement.classList.add('dark');})()</script>
 </head>
 <body>
 
@@ -402,28 +429,21 @@
     </div>
   </div>
   <div class="tr">
-    <button class="hb" id="blist">Lista</button>
     <button class="hb" id="bgriglia">Griglia</button>
-    <div class="tr-sep"></div>
     <button class="hb" id="bmappa">Mappa</button>
-    <button class="hb" id="bprofondita">Fuga</button>
-    <button class="hb" id="bsfera">Sfera</button>
     <div class="tr-sep"></div>
     <span class="zt" id="zt">0%</span>
-    <button class="hb" id="bfiltro">Filtri</button>
+    <div class="tr-sep"></div>
+    <button class="hb" id="bfiltro">Categorie</button>
     <div class="tr-sep"></div>
     <button class="hb" id="babout">About</button>
-    <button id="bdark" title="Dark mode" aria-label="Dark mode"></button>
+    <div class="tr-sep"></div>
+    <button class="hb" id="bdark" title="Dark mode">◐</button>
   </div>
 </div>
 
-<span id="mcoord">X: 0px, Y: 0px</span>
-
 <div id="mnav">
   <button class="mnb" id="mb-mappa">Mappa</button>
-  <button class="mnb" id="mb-fuga">Fuga</button>
-  <button class="mnb" id="mb-sfera">Sfera</button>
-  <button class="mnb" id="mb-lista">Lista</button>
   <button class="mnb" id="mb-griglia">Griglia</button>
 </div>
 
@@ -471,7 +491,7 @@
     <div class="about-inner">
       <span class="about-label">Romanese Archivio</span>
       <p>Questo progetto nasce per raccogliere, conservare e rendere accessibile la memoria visiva di Romana attraverso fotografie, documenti, oggetti e testimonianze legate alla vita del paese. La maggior parte del materiale presente nell'archivio appartiene ad Antioco Mariani, che ha custodito nel tempo immagini e documenti e li ha messi a disposizione per la realizzazione del progetto.</p>
-      <p>Il sito propone una lettura non convenzionale della linea temporale. Le immagini possono essere esplorate attraverso diverse modalità: una mappa, una prospettiva a punto di fuga, una sfera, una lista e una griglia. Ogni visualizzazione offre un modo differente di attraversare l'archivio e mettere in relazione ricordi, persone e momenti.</p>
+      <p>Il sito propone una lettura non convenzionale della linea temporale. Le immagini possono essere esplorate attraverso due modalità: una mappa che distribuisce i materiali per anno e tono cromatico, e una griglia che offre una visione d'insieme dell'intero archivio.</p>
       <p>È inoltre possibile filtrare le immagini per categoria, creando percorsi di consultazione personali e concentrandosi su specifiche tipologie di materiali.</p>
     </div>
   </div>
@@ -531,7 +551,7 @@ function extractPosYear(p, seed) {
 const getCat   = p => p.split('/')[0];
 const getTitle = p => p.split('/').pop().replace(/\.[^.]+$/, '').replace(/^\[[\d\s:/]+\]\s*/, '').replace(/_+/g, ' ').trim();
 const imgUrl   = p => 'img/' + p.split('/').map(encodeURIComponent).join('/');
-const thumbUrl = p => 'thumbs/' + (window._thumbHashes && window._thumbHashes[p] ? window._thumbHashes[p] : 'x') + '.jpg';
+const thumbUrl = p => imgUrl(p) + '?t=1';
 function getSize(c, t) {
   const u = t.toUpperCase();
   if (u.includes('COPERTINA') || u.includes('COVER')) return 220;
@@ -540,6 +560,7 @@ function getSize(c, t) {
   return 148;
 }
 const CATS = {'DOCUMENTI':'Documenti','FOTO POLAROID':'Polaroid','FOTO SPARSE':'Fotografie','LIBRETTI':'Libretti','MAGLIE':'Maglie','OGGETTI':'Oggetti','PORTAFOTO':'Portafoto'};
+const isDark = () => document.documentElement.classList.contains('dark');
 
 // Spread dal centroide: le foto si espandono proporzionalmente al zoom.
 // sp = sc / SC_MIN — invariante: al zoom minimo le foto sono alle posizioni originali.
@@ -609,7 +630,6 @@ let lastPX = 0, lastPY = 0, lastPT = 0;
 let pd = null;
 let inFlight = 0, loadQueue = [];
 let sphInFlight = 0;
-let fullImgInFlight = 0;
 let sphereMode = false;
 let sphereT = 0, sphereTarget = 0;
 let grigliaT = 0, grigliaTarget = 0; // 0 = mappa/profondità, 1 = sfera — lerp
@@ -619,19 +639,13 @@ let sphZoom = 1, sphZoomTarget = 1, sphZoomStable = 0;
 let canvasZoomTarget = SC_MIN, canvasPivotX = 0, canvasPivotY = 0;
 
 // ── INTRO ─────────────────────────────────────────────────────────────────────
-let introPhase = 0; // 0=done, 1=flash, 2=scatter, 3=mapin
-let introT = 0;
-let introFadeT = 0;
-let renderFadeT = 1; // 1=normale, <1=breve velo di sfondo post-intro
-let introDelays = [];
-let introChronoOrder = [];
-let introDelayMap = new Map();
-let introFlashIdx = 0, introFlashBlend = 0, introFlashOrder = [];
-const INTRO_FLASH_COUNT = 10;
-const INTRO_FLASH_SPD = 1 / 9;  // 9 frame per foto (~150ms a 60fps)
-const INTRO_SPD = 0.013;
-const INTRO_DELAY_MAX = 0.55;
-const INTRO_FADE_SPD = 0.022;
+let introPhase = 0; // 0=off, 1=flash, 2=scatter
+let introFlashIdx = 0, introFlashHold = 0, introScatterT = 0;
+let introFlashOrder = [];
+const INTRO_FLASH_SIZE = 240;   // px max-side durante il flash
+const INTRO_FLASH_COUNT = 12;   // quante immagini lampeggiare
+const INTRO_FLASH_HOLD = 5;     // frame per immagine (~83ms a 60fps) → 1s flash
+const INTRO_SCATTER_SPD = 0.018; // velocità scatter (~56 frame = 0.9s)
 let sphRotX0 = 0, sphRotY0 = 0;
 
 // ── CANVAS ────────────────────────────────────────────────────────────────────
@@ -640,18 +654,67 @@ const ctx = cv.getContext('2d', { alpha: false });
 const tip = document.getElementById('tip');
 let DPR = 1, VW = 0, VH = 0, mobileNavH = 0;
 
+let _prevMobile = null; // null = prima chiamata
+
 function resize() {
-  DPR = Math.min(window.devicePixelRatio || 1, 3);
+  DPR = window.devicePixelRatio || 1;
   VW  = window.innerWidth;
   VH  = window.innerHeight;
-  if (VW < 768) {
-    const mnavEl = document.getElementById('mnav');
-    mobileNavH = mnavEl ? (mnavEl.offsetHeight || 58) : 58;
-  } else {
-    mobileNavH = 0;
+
+  // mobileNavH: legge l'altezza effettiva renderizzata (funziona anche in landscape phone)
+  const mnavEl = document.getElementById('mnav');
+  mobileNavH = (mnavEl && mnavEl.offsetHeight > 0) ? mnavEl.offsetHeight : 0;
+
+  // Ricalcola coordinate e fit su cambio portrait ↔ landscape
+  const nowMobile = VW < 768;
+  if (_prevMobile !== null && _prevMobile !== nowMobile && items.length) {
+    const cx0 = items.reduce((s, it) => s + (it.bx + it.jx), 0) / items.length;
+    const cy0 = items.reduce((s, it) => s + (it.by + it.jy), 0) / items.length;
+    if (nowMobile) {
+      // Portrait: ruota anno→Y, colore→X
+      items.forEach(it => {
+        const dx = (it.bx + it.jx) - cx0;
+        const dy = (it.by + it.jy) - cy0;
+        it.mx = CW / 2 + dy * 0.40;
+        it.my = CH / 2 + dx * 0.70;
+      });
+      const sc1 = 0.30;
+      const mxR = (VW / 2) * SC_MIN / (sc1 * sc1) * 0.82;
+      const myR = ((VH - mobileNavH) / 2) * SC_MIN / (sc1 * sc1) * 0.80;
+      items.forEach(it => {
+        it.mx1 = CW / 2 + dj(it.rel_path, 5, mxR * 2);
+        it.my1 = CH / 2 + dj(it.rel_path, 6, myR * 2);
+      });
+      mode1InitSc = 0.30;
+    } else {
+      // Landscape/desktop: ripristina coordinate originali
+      items.forEach(it => {
+        it.mx  = it.bx + it.jx;
+        it.my  = it.by + it.jy;
+        it.mx1 = CW / 2 + dj(it.rel_path, 5, 2500);
+        it.my1 = CH / 2 + dj(it.rel_path, 6, 2000);
+      });
+      mode1InitSc = 0.18;
+    }
+    centX0 = items.reduce((s, it) => s + it.mx,  0) / items.length;
+    centY0 = items.reduce((s, it) => s + it.my,  0) / items.length;
+    centX1 = CW / 2;
+    centY1 = items.reduce((s, it) => s + it.my1, 0) / items.length;
+    centX = centX0; centY = centY0;
+    mode1InitTx = VW / 2 - centX1 * mode1InitSc;
+    mode1InitTy = (VH - mobileNavH) / 2 - centY1 * mode1InitSc;
+    fitAll();
+    sc = fitSc; tx = fitTx; ty = fitTy;
+    canvasZoomTarget = sc; vx = 0; vy = 0;
+    modeTarget = 0; sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
+    setActiveMode('bmappa');
+    // Chiudi pannelli HTML che appartengono solo al portrait mobile
+    if (!nowMobile) document.getElementById('mob-crono').classList.remove('open');
   }
-  cv.width  = Math.round(VW * DPR);
-  cv.height = Math.round(VH * DPR);
+  _prevMobile = nowMobile;
+
+  cv.width  = VW * DPR;
+  cv.height = VH * DPR;
   cv.style.width  = VW + 'px';
   cv.style.height = VH + 'px';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -751,13 +814,11 @@ function startReveal() {
   next();
 }
 
-const isDark = () => document.documentElement.classList.contains('dark');
-
 // ── RENDER SFERA ──────────────────────────────────────────────────────────────
 function renderSphere(masterAlpha = 1) {
   const dk = isDark();
   ctx.globalAlpha = masterAlpha;
-  ctx.fillStyle = dk ? '#111111' : '#f5f5f3';
+  ctx.fillStyle = dk ? '#111110' : '#f5f5f3';
   ctx.fillRect(0, 0, VW, VH);
   ctx.globalAlpha = 1;
 
@@ -788,13 +849,13 @@ function renderSphere(masterAlpha = 1) {
   {
     const chrono = proj.slice().sort((a, b) => (a.it.year || 9999) - (b.it.year || 9999));
     ctx.save();
-    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.13)';
+    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.11)' : 'rgba(0,0,0,0.13)';
     ctx.lineWidth = 0.5;
     ctx.globalAlpha = 0.6 * masterAlpha;
     ctx.beginPath();
     let first = true;
     for (const p of chrono) {
-      if (p.it.alpha < 0.05 || p.it.fa < 0.1) continue;
+      if (p.it.alpha < 0.05) continue;
       if (first) { ctx.moveTo(p.sx, p.sy); first = false; }
       else ctx.lineTo(p.sx, p.sy);
     }
@@ -810,8 +871,8 @@ function renderSphere(masterAlpha = 1) {
     const { it, sx, sy, z2, depth, iw, ih } = p;
     if (iw < 1 || ih < 1) continue;
     const fog = z2 > 0 ? Math.max(0.1, 1 - z2 * 0.85) : 1.0;
-    const a = it.alpha * fog * masterAlpha * it.fa;
-    if (a < 0.02) continue;
+    const a = it.alpha * fog * masterAlpha;
+    if (a < 0.04) continue;
     // cull fuori schermo
     if (sx + iw / 2 < 0 || sx - iw / 2 > VW || sy + ih / 2 < 0 || sy - ih / 2 > VH) continue;
 
@@ -832,7 +893,7 @@ function renderSphere(masterAlpha = 1) {
     if (bm) {
       ctx.drawImage(bm, sx - iw / 2 | 0, sy - ih / 2 | 0, iw, ih);
     } else {
-      ctx.fillStyle = it.hex || '#d4d4d0';
+      ctx.fillStyle = it.hex || (dk ? '#2e2e2c' : '#d4d4d0');
       ctx.fillRect(sx - iw / 2 | 0, sy - ih / 2 | 0, iw, ih);
     }
     ctx.globalAlpha = 1;
@@ -864,19 +925,20 @@ function projectSphere(it) {
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function render() {
   const dk = isDark();
+
   // fast path: sfera completa
   if (sphereT > 0.998 && sphereTarget === 1) { renderSphere(1); return; }
 
-  ctx.fillStyle = dk ? '#111111' : '#f5f5f3';
+  ctx.fillStyle = dk ? '#111110' : '#f5f5f3';
   ctx.fillRect(0, 0, VW, VH);
 
-  const mapAlpha = (1 - sphereT) * introFadeT; // sfumano con sfera e fade-in intro
+  const mapAlpha = 1 - sphereT; // elementi solo-mappa sfumano uscendo
 
   // griglie anni verticali (solo desktop — su mobile anno è sull'asse Y)
   if (mapAlpha > 0.01 && VW >= 768) {
     ctx.save();
     ctx.globalAlpha = mapAlpha;
-    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
     ctx.lineWidth = 1;
     for (let y = 1960; y <= 2000; y += 5) {
       const x = toX(y) * sc + tx;
@@ -885,7 +947,7 @@ function render() {
     }
     const fs = Math.max(8, 200 * sc);
     ctx.font = `700 ${fs}px 'NHG','Helvetica Neue',Arial`;
-    ctx.fillStyle = dk ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
+    ctx.fillStyle = dk ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
     ctx.textBaseline = 'top';
     for (let d = 1960; d <= 2000; d += 10) {
       const x = toX(d) * sc + tx;
@@ -899,28 +961,28 @@ function render() {
   if (mapAlpha > 0.01 && VW >= 768) {
     ctx.save();
     ctx.globalAlpha = mapAlpha;
-    ctx.font = '700 11px \'NHG\',\'Helvetica Neue\',Arial';
+    ctx.font = '600 11px \'NHG\',\'Helvetica Neue\',Arial';
     ctx.textBaseline = 'bottom';
     ctx.textAlign = 'center';
     const barBot = VH - mobileNavH;
     const barY = barBot - 10;
-    ctx.fillStyle = dk ? 'rgba(17,17,17,0.92)' : 'rgba(245,245,243,0.92)';
+    ctx.fillStyle = dk ? 'rgba(17,17,16,0.92)' : 'rgba(245,245,243,0.92)';
     ctx.fillRect(0, barBot - 28, VW, 28);
-    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)';
+    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.15)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(0, barBot - 28); ctx.lineTo(VW, barBot - 28); ctx.stroke();
     for (let y = 1960; y <= 2000; y += 5) {
       const rawX = toX(y) * sc + tx;
       const onScreen = rawX >= 0 && rawX <= VW;
       const sx = Math.max(22, Math.min(VW - 22, rawX));
-      ctx.strokeStyle = dk
-        ? (onScreen ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.12)')
-        : (onScreen ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)');
+      ctx.strokeStyle = onScreen
+        ? (dk ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.3)')
+        : (dk ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.1)');
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(sx, barBot - 28); ctx.lineTo(sx, barBot - 22); ctx.stroke();
-      ctx.fillStyle = dk
-        ? (onScreen ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.28)')
-        : (onScreen ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.25)');
+      ctx.fillStyle = onScreen
+        ? (dk ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.75)')
+        : (dk ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)');
       ctx.fillText(y, sx, barY);
     }
     ctx.textAlign = 'left';
@@ -931,7 +993,7 @@ function render() {
   if (grigliaT > 0.01) {
     ctx.save();
     ctx.globalAlpha = grigliaT;
-    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
+    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.10)';
     ctx.lineWidth = 1;
     for (let i = 0; i <= catOrder.length; i++) {
       const y = (PY + i * GRID_ROW_H) * sc + ty;
@@ -939,7 +1001,7 @@ function render() {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(VW, y); ctx.stroke();
     }
     ctx.font = '500 9px \'NHG\',\'Helvetica Neue\',Arial';
-    ctx.fillStyle = dk ? 'rgba(232,230,227,0.35)' : '#999';
+    ctx.fillStyle = dk ? 'rgba(255,255,255,0.35)' : '#999';
     ctx.textBaseline = 'middle';
     catOrder.forEach((cat, i) => {
       const y = (PY + (i + 0.5) * GRID_ROW_H) * sc + ty;
@@ -1014,7 +1076,7 @@ function render() {
     const chrono = proj.slice().sort((a, b) =>
       (a.it.year || 9999) - (b.it.year || 9999) || a.it.my - b.it.my);
     ctx.save();
-    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
+    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.10)';
     ctx.lineWidth = 0.5;
     ctx.globalAlpha = 0.55;
     ctx.beginPath();
@@ -1029,7 +1091,7 @@ function render() {
   }
 
   // ── disegna item ─────────────────────────────────────────────────────────────
-  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  if (sphereT > 0.005) { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; }
   let hov = null;
   for (const p of proj) {
     const { it, sx, sy, iw, ih, ix, iy } = p;
@@ -1042,19 +1104,17 @@ function render() {
     if (a < 0.03) continue;
 
     // LOD mappa (non durante transizione verso sfera)
-    const lodPx = Math.max(iw, ih) * DPR;
-    if (sphereT < 0.1 && lodPx > 150 && !it.fullBm && !it.fullLoading && fullImgInFlight < 4) {
+    if (sphereT < 0.1 && Math.max(iw, ih) > 100 && !it.fullBm && !it.fullLoading) {
       it.fullLoading = true;
-      fullImgInFlight++;
       const img = new Image();
       img.onload = () => {
-        mkBitmap(img).then(bm => { it.fullBm = bm; it.fullLoading = false; fullImgInFlight--; dirty = true; });
+        mkBitmap(img).then(bm => { it.fullBm = bm; it.fullLoading = false; dirty = true; });
       };
-      img.onerror = () => { it.fullLoading = false; fullImgInFlight--; };
+      img.onerror = () => { it.fullLoading = false; };
       img.src = it.url;
     }
 
-    const bm = (lodPx > 150 && it.fullBm) ? it.fullBm : it.bm;
+    const bm = (Math.max(iw, ih) > 100 && it.fullBm) ? it.fullBm : it.bm;
     ctx.globalAlpha = a;
     const sc2 = bm ? 1 : (0.82 + a * 0.18);
     const diw = iw * sc2 | 0, dih = ih * sc2 | 0;
@@ -1062,9 +1122,9 @@ function render() {
     if (bm) {
       ctx.drawImage(bm, dix, diy, diw, dih);
     } else {
-      ctx.fillStyle = it.hex || '#d4d4d0';
+      ctx.fillStyle = it.hex || (dk ? '#2e2e2c' : '#d4d4d0');
       ctx.fillRect(dix, diy, diw, dih);
-      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillStyle = dk ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.18)';
       ctx.fillRect(dix, diy, diw, dih * 0.4);
     }
     ctx.globalAlpha = 1;
@@ -1081,257 +1141,89 @@ function render() {
 // ── RAF LOOP ──────────────────────────────────────────────────────────────────
 function startIntro() {
   introFlashOrder = [...items].sort(() => Math.random() - 0.5);
-  introFlashIdx = 0; introFlashBlend = 0;
-  introDelays = items.map(() => Math.random() * INTRO_DELAY_MAX);
-  introDelayMap = new Map(items.map((it, i) => [it, introDelays[i]]));
-  introChronoOrder = [...items].sort((a, b) => (a.year || 9999) - (b.year || 9999) || a.my - b.my);
-  introT = 0; introFadeT = 0;
+  // precarica full-res per le prime N foto del flash → nitide su Retina
+  introFlashOrder.slice(0, INTRO_FLASH_COUNT).forEach(it => {
+    if (it.fullBm || it.fullLoading) return;
+    it.fullLoading = true;
+    const img = new Image();
+    img.onload = () => {
+      mkBitmap(img).then(bm => { it.fullBm = bm; it.fullLoading = false; dirty = true; });
+    };
+    img.onerror = () => { it.fullLoading = false; };
+    img.src = it.url;
+  });
+  introFlashIdx = 0; introFlashHold = 0; introScatterT = 0;
   introPhase = 1;
 }
 
-function renderIntroMapFade() {
-  const dk = isDark();
-  const f = introFadeT;
-
-  // 1. sfondo
-  ctx.fillStyle = dk ? '#111111' : '#f5f5f3';
+function renderIntro() {
+  ctx.fillStyle = '#f5f5f3';
   ctx.fillRect(0, 0, VW, VH);
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
-  // 2. griglie verticali anni (sotto le foto, come in render())
-  if (VW >= 768 && f > 0) {
-    ctx.save();
-    ctx.globalAlpha = f;
-    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-    ctx.lineWidth = 1;
-    for (let y = 1960; y <= 2000; y += 5) {
-      const x = toX(y) * sc + tx;
-      if (x < -1 || x > VW + 1) continue;
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, VH); ctx.stroke();
-    }
-    const fs = Math.max(8, 200 * sc);
-    ctx.font = `700 ${fs}px 'NHG','Helvetica Neue',Arial`;
-    ctx.fillStyle = dk ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
-    ctx.textBaseline = 'top';
-    for (let d = 1960; d <= 2000; d += 10) {
-      const x = toX(d) * sc + tx;
-      if (x > VW + fs * 4 || x + fs * 4 < 0) continue;
-      ctx.fillText(d, x, PY * 0.25 * sc + ty);
-    }
-    ctx.restore();
-  }
-
-  // 3. barra date in basso (sotto le foto)
-  if (VW >= 768 && f > 0) {
-    ctx.save();
-    ctx.globalAlpha = f;
-    ctx.font = "700 11px 'NHG','Helvetica Neue',Arial";
-    ctx.textBaseline = 'bottom'; ctx.textAlign = 'center';
-    const barBot = VH - mobileNavH, barY = barBot - 10;
-    ctx.fillStyle = dk ? 'rgba(17,17,17,0.92)' : 'rgba(245,245,243,0.92)';
-    ctx.fillRect(0, barBot - 28, VW, 28);
-    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)';
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(0, barBot - 28); ctx.lineTo(VW, barBot - 28); ctx.stroke();
-    for (let y = 1960; y <= 2000; y += 5) {
-      const rawX = toX(y) * sc + tx;
-      const onScreen = rawX >= 0 && rawX <= VW;
-      const sx2 = Math.max(22, Math.min(VW - 22, rawX));
-      ctx.strokeStyle = dk ? (onScreen ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.12)') : (onScreen ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)');
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(sx2, barBot - 28); ctx.lineTo(sx2, barBot - 22); ctx.stroke();
-      ctx.fillStyle = dk ? (onScreen ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.28)') : (onScreen ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.25)');
-      ctx.fillText(y, sx2, barY);
-    }
-    ctx.textAlign = 'left';
-    ctx.restore();
-  }
-
-  // 4. linea cronologica identica a render()
-  {
-    ctx.save();
-    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
-    ctx.lineWidth = 0.5;
-    ctx.globalAlpha = 0.55;
-    ctx.beginPath();
-    let first = true;
-    for (const it of introChronoOrder) {
-      const p = project(it);
-      if (first) { ctx.moveTo(p.sx, p.sy); first = false; }
-      else ctx.lineTo(p.sx, p.sy);
-    }
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  // 5. foto alle posizioni finali — stesse coordinate intere di render()
-  const proj = [];
-  for (const it of items) {
-    if (!it.visible) continue;
-    const { sw, sh } = itemDims(it);
-    const p = project(it);
-    const iw = sw * sc * p.depth | 0;
-    const ih = sh * sc * p.depth | 0;
-    const ix = p.sx - iw / 2 | 0;
-    const iy = p.sy - ih / 2 | 0;
-    proj.push({ it, iw, ih, ix, iy, sortZ: getWz(it) });
-  }
-  proj.sort((a, b) => b.sortZ - a.sortZ);
-  for (const { it, iw, ih, ix, iy } of proj) {
-    if (iw < 1) continue;
+  if (introPhase === 1) {
+    const it = introFlashOrder[introFlashIdx % introFlashOrder.length];
+    const aspect = it.aspect || 1;
+    const iw = (aspect >= 1 ? INTRO_FLASH_SIZE : INTRO_FLASH_SIZE * aspect) | 0;
+    const ih = (aspect >= 1 ? INTRO_FLASH_SIZE / aspect : INTRO_FLASH_SIZE) | 0;
     ctx.globalAlpha = 1;
-    if (it.bm) ctx.drawImage(it.bm, ix, iy, iw, ih);
-    else { ctx.fillStyle = it.hex || '#ccc'; ctx.fillRect(ix, iy, iw, ih); }
-  }
-  ctx.globalAlpha = 1;
-}
-
-function drawFlashPhoto(it, alpha) {
-  const aspect = it.aspect || 1;
-  const maxSide = Math.min(VW, VH) * 0.38;
-  const iw = (aspect >= 1 ? maxSide : maxSide * aspect) | 0;
-  const ih = (aspect >= 1 ? maxSide / aspect : maxSide) | 0;
-  ctx.globalAlpha = alpha;
-  if (it.bm) ctx.drawImage(it.bm, (VW / 2 - iw / 2) | 0, (VH / 2 - ih / 2) | 0, iw, ih);
-  else { ctx.fillStyle = it.hex || '#ccc'; ctx.fillRect((VW / 2 - iw / 2) | 0, (VH / 2 - ih / 2) | 0, iw, ih); }
-}
-
-function renderIntroFlash() {
-  const dk = isDark();
-  ctx.fillStyle = dk ? '#111111' : '#f5f5f3';
-  ctx.fillRect(0, 0, VW, VH);
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-
-  const b = introFlashBlend;
-  const fadeInEnd = 0.25, fadeOutStart = 0.72;
-  const currAlpha = b < fadeInEnd ? b / fadeInEnd
-    : b < fadeOutStart ? 1
-    : 1 - (b - fadeOutStart) / (1 - fadeOutStart);
-  const nextAlpha = b < fadeOutStart ? 0 : (b - fadeOutStart) / (1 - fadeOutStart);
-
-  drawFlashPhoto(introFlashOrder[introFlashIdx % introFlashOrder.length], currAlpha);
-  if (nextAlpha > 0.01)
-    drawFlashPhoto(introFlashOrder[(introFlashIdx + 1) % introFlashOrder.length], nextAlpha);
-  ctx.globalAlpha = 1;
-}
-
-function renderIntroScatter() {
-  const dk = isDark();
-  ctx.fillStyle = dk ? '#111111' : '#f5f5f3';
-  ctx.fillRect(0, 0, VW, VH);
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-
-  // linea cronologica — segmento parziale continuo (effetto penna)
-  const lineProgress = Math.max(0, Math.min(1, (introT - 0.2) / (1 + INTRO_DELAY_MAX - 0.2)));
-  if (lineProgress > 0 && introChronoOrder.length > 1) {
-    const totalPts = introChronoOrder.length;
-    const progressF = lineProgress * (totalPts - 1);
-    const fullIdx = Math.floor(progressF);
-    const partialT = progressF - fullIdx;
-
-    // calcola posizioni per tutti i punti visibili + il prossimo (parziale)
-    const pts = [];
-    for (let i = 0; i <= Math.min(fullIdx + 1, totalPts - 1); i++) {
-      const it = introChronoOrder[i];
-      const delay = introDelayMap.get(it) || 0;
-      const lt = Math.max(0, Math.min(1, introT - delay));
-      const et = 0.08 + 0.92 * (1 - Math.pow(1 - lt, 5));
-      const p = project(it);
-      pts.push({
-        sx: VW / 2 + (p.sx - VW / 2) * et,
-        sy: VH / 2 + (p.sy - VH / 2) * et
-      });
+    const bm = it.fullBm || it.bm;
+    if (bm) {
+      ctx.drawImage(bm, (VW / 2 - iw / 2) | 0, (VH / 2 - ih / 2) | 0, iw, ih);
+    } else {
+      ctx.fillStyle = it.hex || '#ccc';
+      ctx.fillRect((VW / 2 - iw / 2) | 0, (VH / 2 - ih / 2) | 0, iw, ih);
     }
-
-    const lineAlpha = Math.min(1, lineProgress * 4) * 0.55;
-    ctx.save();
-    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
-    ctx.lineWidth = 0.5;
-    ctx.globalAlpha = lineAlpha;
-    ctx.beginPath();
-    for (let i = 0; i < pts.length; i++) {
-      if (i === 0) ctx.moveTo(pts[i].sx, pts[i].sy);
-      else if (i < pts.length - 1) ctx.lineTo(pts[i].sx, pts[i].sy);
-      else {
-        // ultimo segmento parziale
-        const prev = pts[i - 1];
-        const curr = pts[i];
-        ctx.lineTo(prev.sx + (curr.sx - prev.sx) * partialT, prev.sy + (curr.sy - prev.sy) * partialT);
+  } else if (introPhase === 2) {
+    const t = 1 - Math.pow(1 - introScatterT, 2.5);
+    const alpha = Math.min(1, introScatterT * 2.5);
+    for (const it of items) {
+      const { sw, sh } = itemDims(it);
+      const p = project(it);
+      const fw = sw * sc * p.depth, fh = sh * sc * p.depth;
+      if (fw < 1) continue;
+      const aspect = it.aspect || 1;
+      const sw0 = aspect >= 1 ? INTRO_FLASH_SIZE : INTRO_FLASH_SIZE * aspect;
+      const sh0 = aspect >= 1 ? INTRO_FLASH_SIZE / aspect : INTRO_FLASH_SIZE;
+      const iw = (sw0 + (fw - sw0) * t) | 0;
+      const ih = (sh0 + (fh - sh0) * t) | 0;
+      if (iw < 1) continue;
+      const sx = (VW / 2 + (p.sx - VW / 2) * t) | 0;
+      const sy = (VH / 2 + (p.sy - VH / 2) * t) | 0;
+      ctx.globalAlpha = alpha;
+      if (it.bm) {
+        ctx.drawImage(it.bm, sx - iw / 2, sy - ih / 2, iw, ih);
+      } else {
+        ctx.fillStyle = it.hex || '#ccc';
+        ctx.fillRect(sx - iw / 2, sy - ih / 2, iw, ih);
       }
     }
-    ctx.stroke();
-
-    // punta luminosa che scorre lungo la linea
-    if (pts.length >= 2) {
-      const last = pts[pts.length - 1];
-      const prev = pts[pts.length - 2];
-      const tipX = prev.sx + (last.sx - prev.sx) * partialT;
-      const tipY = prev.sy + (last.sy - prev.sy) * partialT;
-      ctx.globalAlpha = lineAlpha * 2.5;
-      ctx.fillStyle = dk ? '#ffffff' : '#000000';
-      ctx.beginPath();
-      ctx.arc(tipX, tipY, 1.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
+    ctx.globalAlpha = 1;
   }
-
-  // foto
-  for (let i = 0; i < items.length; i++) {
-    const it = items[i];
-    const lt = Math.max(0, Math.min(1, introT - introDelays[i]));
-    if (lt === 0) continue;
-    const easedT = 1 - Math.pow(1 - lt, 5);
-    const alpha = Math.min(1, lt * 2);
-    const { sw, sh } = itemDims(it);
-    const p = project(it);
-    const fw = sw * sc * p.depth, fh = sh * sc * p.depth;
-    if (fw < 1) continue;
-    const spread = 0.08 + 0.92 * easedT;
-    const iw = fw * spread;
-    const ih = fh * spread;
-    if (iw < 1) continue;
-    const sx = VW / 2 + (p.sx - VW / 2) * spread;
-    const sy = VH / 2 + (p.sy - VH / 2) * spread;
-    ctx.globalAlpha = alpha;
-    if (it.bm) ctx.drawImage(it.bm, sx - iw / 2, sy - ih / 2, iw, ih);
-    else { ctx.fillStyle = it.hex || '#ccc'; ctx.fillRect(sx - iw / 2, sy - ih / 2, iw, ih); }
-  }
-  ctx.globalAlpha = 1;
 }
 
 function tick() {
   // ── intro animation ──────────────────────────────────────────────────────────
-  if (introPhase === 1) {
-    introFlashBlend += INTRO_FLASH_SPD;
-    if (introFlashBlend >= 1) {
-      introFlashBlend -= 1;
-      introFlashIdx++;
-      if (introFlashIdx >= INTRO_FLASH_COUNT) { introPhase = 2; introT = 0; }
+  if (introPhase > 0) {
+    if (introPhase === 1) {
+      introFlashHold++;
+      if (introFlashHold >= INTRO_FLASH_HOLD) {
+        introFlashHold = 0;
+        introFlashIdx++;
+        if (introFlashIdx >= INTRO_FLASH_COUNT) {
+          introPhase = 2; introScatterT = 0;
+        }
+      }
+    } else if (introPhase === 2) {
+      introScatterT = Math.min(1, introScatterT + INTRO_SCATTER_SPD);
+      if (introScatterT >= 1) {
+        introPhase = 0;
+        items.forEach(it => { it.visible = true; it.alpha = 1; });
+        dirty = true;
+      }
     }
-    renderIntroFlash();
-    requestAnimationFrame(tick);
-    return;
-  }
-  if (introPhase === 2) {
-    introT += INTRO_SPD;
-    if (introT >= 1 + INTRO_DELAY_MAX) {
-      introPhase = 3;
-      items.forEach(it => { it.visible = true; it.alpha = 1; });
-    }
-    renderIntroScatter();
-    requestAnimationFrame(tick);
-    return;
-  }
-  if (introPhase === 3) {
-    introFadeT = Math.min(1, introFadeT + INTRO_FADE_SPD);
-    const hudEl = document.getElementById('hud');
-    if (hudEl) hudEl.style.opacity = introFadeT.toFixed(3);
-    if (introFadeT >= 1) { introPhase = 0; renderFadeT = 0; dirty = true; }
-    renderIntroMapFade();
+    renderIntro();
     requestAnimationFrame(tick);
     return;
   }
@@ -1356,7 +1248,7 @@ function tick() {
   for (let i = 0; i < items.length; i++) {
     const it = items[i];
     if (it.visible && it.alpha < 1) { it.alpha = Math.min(1, it.alpha + 0.055); dirty = true; }
-    const tfa = hiddenCats.size === 0 || !hiddenCats.has(it.cat) ? 1 : 0.05;
+    const tfa = hiddenCats.size === 0 || !hiddenCats.has(it.cat) ? 1 : 0;
     if (Math.abs(it.fa - tfa) > 0.004) { it.fa += (tfa - it.fa) * 0.12; dirty = true; }
     else it.fa = tfa;
   }
@@ -1447,14 +1339,6 @@ function tick() {
     }
   }
   if (dirty) { render(); dirty = false; }
-  if (renderFadeT < 1) {
-    renderFadeT = Math.min(1, renderFadeT + 0.07);
-    ctx.fillStyle = isDark() ? '#111111' : '#f5f5f3';
-    ctx.globalAlpha = (1 - renderFadeT) * 0.85;
-    ctx.fillRect(0, 0, VW, VH);
-    ctx.globalAlpha = 1;
-    dirty = true;
-  }
   requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
@@ -1560,19 +1444,16 @@ cv.addEventListener('wheel', e => {
   canvasPivotX = e.clientX; canvasPivotY = e.clientY;
   dirty = true;
 }, { passive: false });
-const mobileNavMap = { bmappa:'mb-mappa', bprofondita:'mb-fuga', bsfera:'mb-sfera', blist:'mb-lista', bgriglia:'mb-griglia' };
+const mobileNavMap = { bmappa:'mb-mappa', bgriglia:'mb-griglia' };
 const viewDesc = {
-  bmappa:      'Distribuzione per anno e tono cromatico',
-  bprofondita: 'Profondità temporale — 1968 in primo piano',
-  bsfera:      'Archivio in forma sferica',
-  bgriglia:    'Indice cronologico completo',
-  blist:       'Elenco dei documenti',
+  bmappa:   'Distribuzione per anno e tono cromatico',
+  bgriglia: 'Indice cronologico completo',
 };
 function setActiveMode(id) {
-  ['blist', 'bmappa', 'bprofondita', 'bsfera', 'bgriglia'].forEach(b =>
+  ['bmappa', 'bgriglia'].forEach(b =>
     document.getElementById(b).classList.remove('active'));
-  if (id) document.getElementById(id).classList.add('active');
-  ['mb-mappa','mb-fuga','mb-sfera','mb-lista','mb-griglia'].forEach(b =>
+  if (id) document.getElementById(id)?.classList.add('active');
+  ['mb-mappa','mb-griglia'].forEach(b =>
     document.getElementById(b).classList.remove('active'));
   if (id && mobileNavMap[id]) document.getElementById(mobileNavMap[id]).classList.add('active');
   const desc = document.getElementById('hview-desc');
@@ -1655,7 +1536,7 @@ function buildCronoView() {
       const cell = document.createElement('div');
       cell.className = 'mc-cell';
       const img = document.createElement('img');
-      img.dataset.src = it.url;
+      img.dataset.src = it.thumbSrc;
       img.alt = '';
       cell.appendChild(img);
       cell.onclick = () => openLB(it.idx);
@@ -1675,7 +1556,7 @@ function buildCronoView() {
       img.onload = () => img.classList.add('vis');
       obs.unobserve(img);
     }
-  }, { root: cronoCt, rootMargin: '400px 0px' });
+  }, { root: cronoCt, rootMargin: '0px 400px' });
   el.querySelectorAll('img[data-src]').forEach(img => obs.observe(img));
 }
 
@@ -1688,6 +1569,14 @@ function goMobCrono() {
   sphereMode = false; sphereTarget = 0; dirty = true;
   setActiveMode('bmappa');
   if (items.length) buildCronoView();
+  // fallback: forza caricamento immagini visibili se observer non ha sparato
+  setTimeout(() => {
+    document.getElementById('mob-crono-inner').querySelectorAll('img[data-src]').forEach(img => {
+      img.src = img.dataset.src;
+      img.onload = () => img.classList.add('vis');
+      img.removeAttribute('data-src');
+    });
+  }, 800);
 }
 
 // ── MOBILE: COLORI (Colore) ───────────────────────────────────────────────
@@ -1698,7 +1587,7 @@ function buildColoriView() {
     const cell = document.createElement('div');
     cell.className = 'cc-cell';
     const img = document.createElement('img');
-    img.dataset.src = it.url;
+    img.dataset.src = it.thumbSrc;
     img.alt = '';
     cell.appendChild(img);
     cell.onclick = () => openLB(it.idx);
@@ -1726,6 +1615,13 @@ function goMobColori() {
   sphereMode = false; sphereTarget = 0; dirty = true;
   setActiveMode('bprofondita');
   if (items.length) buildColoriView();
+  setTimeout(() => {
+    document.getElementById('mob-colori-inner').querySelectorAll('img[data-src]').forEach(img => {
+      img.src = img.dataset.src;
+      img.onload = () => img.classList.add('vis');
+      img.removeAttribute('data-src');
+    });
+  }, 800);
 }
 
 function buildGridView() {
@@ -1736,13 +1632,10 @@ function buildGridView() {
     if (!a.year) return 1; if (!b.year) return -1;
     return a.year - b.year || a.cat.localeCompare(b.cat);
   });
-  let counter = 0;
-  sorted.forEach(it => {
-    if (hiddenCats.has(it.cat)) return;
-    counter++;
+  sorted.forEach((it, i) => {
     const cell = document.createElement('div');
     cell.className = 'gv-cell';
-    const num = String(counter).padStart(3, '0');
+    const num = String(i + 1).padStart(3, '0');
     cell.innerHTML =
       `<span class="gv-num">${num}</span>` +
       `<div class="gv-sq"><img data-src="${it.thumbSrc}" alt=""></div>` +
@@ -1773,16 +1666,11 @@ function goGriglia() {
   if (items.length) buildGridView();
 }
 
-document.getElementById('bmappa').onclick      = goMappa;
-document.getElementById('bprofondita').onclick  = goProfondita;
-document.getElementById('bsfera').onclick       = goSfera;
-document.getElementById('bgriglia').onclick     = goGriglia;
+document.getElementById('bmappa').onclick   = goMappa;
+document.getElementById('bgriglia').onclick = goGriglia;
 
 // mobile bottom nav
 document.getElementById('mb-mappa').onclick   = goMappa;
-document.getElementById('mb-fuga').onclick    = goProfondita;
-document.getElementById('mb-sfera').onclick   = goSfera;
-document.getElementById('mb-lista').onclick   = goLista;
 document.getElementById('mb-griglia').onclick = goGriglia;
 
 // ── FILTRO CATEGORIE ──────────────────────────────────────────────────────────
@@ -1791,10 +1679,6 @@ document.getElementById('bfiltro').onclick = e => {
   e.stopPropagation();
   fpanel.classList.toggle('open');
 };
-function applyFiltersToHtmlViews() {
-  if (document.getElementById('lv').classList.contains('open')) buildListView();
-  if (document.getElementById('gv').classList.contains('open')) buildGridView();
-}
 document.querySelectorAll('.fp-cat').forEach(btn => {
   btn.onclick = e => {
     e.stopPropagation();
@@ -1807,7 +1691,6 @@ document.querySelectorAll('.fp-cat').forEach(btn => {
       btn.classList.remove('vis');
     }
     dirty = true;
-    applyFiltersToHtmlViews();
   };
 });
 document.getElementById('fp-all').onclick = e => {
@@ -1815,10 +1698,10 @@ document.getElementById('fp-all').onclick = e => {
   hiddenCats.clear();
   document.querySelectorAll('.fp-cat').forEach(b => b.classList.add('vis'));
   dirty = true;
-  applyFiltersToHtmlViews();
 };
 document.addEventListener('click', () => fpanel.classList.remove('open'));
 
+// ── DARK MODE ─────────────────────────────────────────────────────────────────
 document.getElementById('bdark').onclick = e => {
   e.stopPropagation();
   const nowDark = document.documentElement.classList.toggle('dark');
@@ -1826,7 +1709,7 @@ document.getElementById('bdark').onclick = e => {
   dirty = true;
 };
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-  if (false) {
+  if (!localStorage.getItem('romanese-theme')) {
     document.documentElement.classList.toggle('dark', e.matches);
     dirty = true;
   }
@@ -1896,10 +1779,8 @@ cv.addEventListener('mousedown', e => {
   lastPX = e.clientX; lastPY = e.clientY; lastPT = performance.now();
   cv.classList.add('drag');
 });
-const mcoordEl = document.getElementById('mcoord');
 window.addEventListener('mousemove', e => {
   mouseX = e.clientX; mouseY = e.clientY;
-  if (mcoordEl) mcoordEl.textContent = `X: ${mouseX}px, Y: ${mouseY}px`;
   if (drg) {
     if (sphereMode) {
       const dx = e.clientX - x0, dy = e.clientY - y0;
@@ -2038,32 +1919,7 @@ function getItemScreenRect(it) {
 function openLB(idx, originRect) {
   if (lbClosing) return;
   dIdx = idx;
-  if (document.getElementById('gv').classList.contains('open')) {
-    dItems = [...items]
-      .filter(it => !hiddenCats.has(it.cat))
-      .sort((a, b) => {
-        if (!a.year && !b.year) return 0;
-        if (!a.year) return 1; if (!b.year) return -1;
-        return a.year - b.year || a.cat.localeCompare(b.cat);
-      });
-  } else if (document.getElementById('lv').classList.contains('open')) {
-    dItems = [...items]
-      .filter(it => !hiddenCats.has(it.cat))
-      .sort((a, b) => {
-        if (!a.year && !b.year) return 0;
-        if (!a.year) return 1; if (!b.year) return -1;
-        return a.year - b.year;
-      });
-  } else if (document.getElementById('mob-crono').classList.contains('open')) {
-    dItems = [...items].sort((a, b) => {
-      const ay = a.year || 9999, by2 = b.year || 9999;
-      return ay - by2 || (a.hue || 0) - (b.hue || 0);
-    });
-  } else if (document.getElementById('mob-colori').classList.contains('open')) {
-    dItems = [...items].sort((a, b) => (a.hue || 0) - (b.hue || 0));
-  } else {
-    dItems = [...items].sort((a, b) => a.mx - b.mx);
-  }
+  dItems = [...items].sort((a, b) => a.mx - b.mx);
   lbOriginRect = originRect || null;
   showLB(idx, true);
 }
@@ -2222,7 +2078,6 @@ function buildListView() {
   }
 
   sorted.forEach(it => {
-    if (hiddenCats.has(it.cat)) return;
     const row = document.createElement('div');
     row.className = 'lvr';
     row.innerHTML =
@@ -2277,8 +2132,6 @@ document.getElementById('about-close').onclick = goAbout;
 document.getElementById('about').addEventListener('click', e => {
   if (e.target === document.getElementById('about')) goAbout();
 });
-document.getElementById('blist').onclick = goLista;
-
 // swipe lightbox su mobile
 let lbTouchStartX = null;
 document.getElementById('lb').addEventListener('touchstart', e => {
@@ -2418,8 +2271,6 @@ async function init() {
     introStarted = true;
     items.forEach(it => { it.visible = true; it.alpha = 1; });
     document.getElementById('prog').style.opacity = '0';
-    introFadeT = 1;
-    document.getElementById('hud').style.opacity = '1';
     const ov2 = document.getElementById('ov');
     ov2.style.opacity = '0';
     setTimeout(() => { ov2.style.display = 'none'; setActiveMode('bmappa'); }, 150);
