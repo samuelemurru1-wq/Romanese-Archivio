@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Romanese — Archivio</title>
   <link rel="icon" type="image/png" href="favicon.png">
-  <script>(function(){var t=localStorage.getItem('romanese-theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');})();</script>
   <style>
     @font-face { font-family: 'NHG'; font-weight: 400; font-style: normal; src: local('NeueHaasDisplay-Roman'), local('Neue Haas Grotesk Display Pro'); }
     @font-face { font-family: 'NHG'; font-weight: 500; font-style: normal; src: local('NeueHaasDisplay-Medium'), local('Neue Haas Grotesk Display Pro Medium'); }
@@ -198,7 +197,7 @@
       .tl { left: 14px; }
       .logo-img { height: 18px; }
       #hview-desc { display: none; }
-      .tr .hb:not(#bfiltro):not(#babout):not(#bdark) { display: none; }
+      .tr .hb:not(#bfiltro):not(#babout) { display: none; }
       .tr .tr-sep { display: none; }
       .tr .zt { display: none; }
       .tr { overflow: visible; max-width: unset; padding-right: 10px; }
@@ -335,86 +334,6 @@
       #mob-crono, #mob-colori { bottom: calc(44px + env(safe-area-inset-bottom, 0px)); top: 54px; }
     }
 
-    /* ── DARK MODE ─────────────────────────────────────────────────────────── */
-    #bdark {
-      font-size: 13px; letter-spacing: 0; padding: 0 10px;
-      opacity: 0.45; transition: opacity 0.12s;
-    }
-    #bdark:hover { opacity: 1; }
-
-    html.dark { color-scheme: dark; }
-    html.dark body { background: #111110; color: #e8e6e3; }
-    html.dark canvas { background: #111110; }
-    html.dark .logo-img { filter: invert(1); }
-
-    html.dark .meta { color: rgba(232,230,227,0.40); }
-    html.dark #hview-desc { color: rgba(232,230,227,0.30); }
-    html.dark .hb { color: rgba(232,230,227,0.40); }
-    html.dark .hb:hover { color: #e8e6e3; }
-    html.dark .hb.active { color: #e8e6e3; font-weight: 600; }
-    html.dark .tr-sep { background: rgba(255,255,255,0.12); }
-    html.dark .zt { color: rgba(232,230,227,0.35); }
-
-    html.dark #prog { background: #555; }
-    html.dark #tip { color: #e8e6e3; background: rgba(17,17,16,0.94); }
-
-    html.dark #lb-overlay { background: rgba(17,17,16,0.92); }
-    html.dark #lx { color: rgba(232,230,227,0.35); }
-    html.dark #lx:hover { color: #e8e6e3; }
-    html.dark #lc { color: rgba(232,230,227,0.28); }
-    html.dark .lb-arr { color: rgba(232,230,227,0.22); }
-    html.dark .lb-arr:hover { color: rgba(232,230,227,0.80); }
-    html.dark #lb-info { background: rgba(22,22,20,0.94); }
-    html.dark #lt { color: #e8e6e3; }
-    html.dark #lm { color: rgba(232,230,227,0.40); }
-    html.dark #ls { border-color: rgba(255,255,255,0.12); }
-
-    html.dark #ov { background: #111110; color: #444; }
-
-    html.dark #lv { background: #111110; }
-    html.dark .lvr { border-bottom-color: rgba(255,255,255,0.04); }
-    html.dark .lvr:hover, html.dark .lvr.pin { background: rgba(255,255,255,0.04); }
-    html.dark .lvy { color: rgba(232,230,227,0.28); }
-    html.dark .lvt { color: #e8e6e3; }
-    html.dark .lvc { color: rgba(232,230,227,0.28); }
-    html.dark #lv-list { border-right-color: rgba(255,255,255,0.07); }
-    html.dark #lv-cap { color: rgba(232,230,227,0.32); }
-
-    html.dark #gv { background: #111110; }
-    html.dark #gv-grid { background: rgba(255,255,255,0.06); }
-    html.dark .gv-cell { background: #111110; }
-    html.dark .gv-num { color: rgba(232,230,227,0.22); }
-    html.dark .gv-sq { background: #252523; }
-    html.dark .gv-cell:hover .gv-sq::after { box-shadow: inset 0 0 0 2px #e8e6e3; }
-    html.dark .gv-year { color: rgba(232,230,227,0.32); }
-    html.dark .gv-cat  { color: rgba(232,230,227,0.22); }
-
-    html.dark .about-panel { background: rgba(22,22,20,0.94); box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
-    html.dark .about-label { color: rgba(232,230,227,0.28); }
-    html.dark .about-inner p { color: rgba(232,230,227,0.72); }
-    html.dark .about-close { color: rgba(232,230,227,0.30); }
-    html.dark .about-close:hover { color: #e8e6e3; }
-
-    html.dark #fpanel { background: #1b1b19; border-color: rgba(255,255,255,0.09); }
-    html.dark .fp-cat { color: rgba(232,230,227,0.28); }
-    html.dark .fp-cat:hover { color: rgba(232,230,227,0.65); }
-    html.dark .fp-cat.vis { color: #e8e6e3; }
-    html.dark .fp-all { color: rgba(232,230,227,0.28); border-top-color: rgba(255,255,255,0.06); }
-    html.dark .fp-all:hover { color: rgba(232,230,227,0.70); }
-
-    html.dark #mnav { background: rgba(17,17,16,0.97); border-top-color: rgba(255,255,255,0.08); }
-    html.dark .mnb { color: rgba(232,230,227,0.28); }
-    html.dark .mnb.active { color: #e8e6e3; }
-    html.dark .mnb + .mnb { border-left-color: rgba(255,255,255,0.06); }
-
-    html.dark #mob-crono { background: #111110; }
-    html.dark .mc-col { background: #111110; border-bottom-color: rgba(255,255,255,0.06); }
-    html.dark .mc-yhdr { color: rgba(232,230,227,0.26); }
-    html.dark .mc-items { background: rgba(255,255,255,0.06); }
-    html.dark .mc-cell { background: #111110; }
-    html.dark #mob-colori { background: #111110; }
-    html.dark #mob-colori-inner { background: rgba(255,255,255,0.06); }
-    html.dark .cc-cell { background: #111110; }
   </style>
 </head>
 <body>
@@ -438,8 +357,6 @@
     <button class="hb" id="bfiltro">Categorie</button>
     <div class="tr-sep"></div>
     <button class="hb" id="babout">About</button>
-    <div class="tr-sep"></div>
-    <button class="hb" id="bdark" title="Dark mode">◐</button>
   </div>
 </div>
 
@@ -561,7 +478,7 @@ function getSize(c, t) {
   return 148;
 }
 const CATS = {'DOCUMENTI':'Documenti','FOTO POLAROID':'Polaroid','FOTO SPARSE':'Fotografie','LIBRETTI':'Libretti','MAGLIE':'Maglie','OGGETTI':'Oggetti','PORTAFOTO':'Portafoto'};
-const isDark = () => document.documentElement.classList.contains('dark');
+const isDark = () => false;
 
 // Spread dal centroide: le foto si espandono proporzionalmente al zoom.
 // sp = sc / SC_MIN — invariante: al zoom minimo le foto sono alle posizioni originali.
@@ -1415,19 +1332,6 @@ document.getElementById('fp-all').onclick = e => {
 };
 document.addEventListener('click', () => fpanel.classList.remove('open'));
 
-// ── DARK MODE ─────────────────────────────────────────────────────────────────
-document.getElementById('bdark').onclick = e => {
-  e.stopPropagation();
-  const nowDark = document.documentElement.classList.toggle('dark');
-  localStorage.setItem('romanese-theme', nowDark ? 'dark' : 'light');
-  dirty = true;
-};
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-  if (!localStorage.getItem('romanese-theme')) {
-    document.documentElement.classList.toggle('dark', e.matches);
-    dirty = true;
-  }
-});
 
 // ── HIT TEST ─────────────────────────────────────────────────────────────────
 function hitAt(mx, my) {
