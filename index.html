@@ -657,7 +657,7 @@ let DPR = 1, VW = 0, VH = 0, mobileNavH = 0;
 let _prevMobile = null; // null = prima chiamata
 
 function resize() {
-  DPR = window.devicePixelRatio || 1;
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
   VW  = window.innerWidth;
   VH  = window.innerHeight;
 
@@ -719,7 +719,7 @@ function resize() {
   cv.style.height = VH + 'px';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
+  ctx.imageSmoothingQuality = VW < 768 ? 'medium' : 'high';
   dirty = true;
 }
 window.addEventListener('resize', resize);
@@ -731,7 +731,7 @@ function mkBitmap(img) {
   return createImageBitmap(img).catch(() => img);
 }
 
-const CONCURRENCY = 8;
+const CONCURRENCY = window.innerWidth < 768 ? 4 : 8;
 
 function processQueue() {
   while (inFlight < CONCURRENCY && loadQueue.length > 0) {
@@ -1104,7 +1104,7 @@ function render() {
     if (a < 0.03) continue;
 
     // LOD mappa (non durante transizione verso sfera)
-    if (sphereT < 0.1 && Math.max(iw, ih) > 100 && !it.fullBm && !it.fullLoading) {
+    if (VW >= 768 && sphereT < 0.1 && Math.max(iw, ih) > 100 && !it.fullBm && !it.fullLoading) {
       it.fullLoading = true;
       const img = new Image();
       img.onload = () => {
@@ -1670,7 +1670,7 @@ document.getElementById('bmappa').onclick   = goMappa;
 document.getElementById('bgriglia').onclick = goGriglia;
 
 // mobile bottom nav
-document.getElementById('mb-mappa').onclick   = goMappa;
+document.getElementById('mb-mappa').onclick   = goMobCrono;
 document.getElementById('mb-griglia').onclick = goGriglia;
 
 // ── FILTRO CATEGORIE ──────────────────────────────────────────────────────────
@@ -2273,7 +2273,7 @@ async function init() {
     document.getElementById('prog').style.opacity = '0';
     const ov2 = document.getElementById('ov');
     ov2.style.opacity = '0';
-    setTimeout(() => { ov2.style.display = 'none'; setActiveMode('bmappa'); }, 150);
+    setTimeout(() => { ov2.style.display = 'none'; goMobCrono(); }, 150);
   } else {
     setActiveMode('bmappa');
     items.forEach(it => { it.visible = true; });
