@@ -1154,7 +1154,6 @@ function startIntro() {
   });
   introFlashIdx = 0; introFlashHold = 0; introScatterT = 0;
   introPhase = 1;
-  wakeLoop();
 }
 
 function renderIntro() {
@@ -1204,28 +1203,9 @@ function renderIntro() {
   }
 }
 
-let rafId = null;
-function wakeLoop() { if (!rafId) rafId = requestAnimationFrame(tick); }
-function markDirty() { dirty = true; wakeLoop(); }
-function needsNextFrame() {
-  if (introPhase > 0) return true;
-  if (Math.abs(sphereT - sphereTarget) > 0.001) return true;
-  if (Math.abs(grigliaT - grigliaTarget) > 0.001) return true;
-  if (Math.abs(modeT - modeTarget) > 0.001) return true;
-  if (!drg && (Math.abs(vx) > 0.3 || Math.abs(vy) > 0.3)) return true;
-  if (sphereMode) return true;
-  if (!sphereMode && Math.abs(sc - canvasZoomTarget) > 0.0001) return true;
-  if (dirty) return true;
-  for (const it of items) {
-    if (it.visible && it.alpha < 1) return true;
-    const tfa = hiddenCats.size === 0 || !hiddenCats.has(it.cat) ? 1 : 0;
-    if (Math.abs(it.fa - tfa) > 0.004) return true;
-  }
-  return false;
-}
+function markDirty() { dirty = true; }
 
 function tick() {
-  rafId = null;
   // ── intro animation ──────────────────────────────────────────────────────────
   if (introPhase > 0) {
     if (introPhase === 1) {
@@ -1246,7 +1226,7 @@ function tick() {
       }
     }
     renderIntro();
-    rafId = requestAnimationFrame(tick);
+    requestAnimationFrame(tick);
     return;
   }
 
@@ -1361,9 +1341,9 @@ function tick() {
     }
   }
   if (dirty) { render(); dirty = false; }
-  if (needsNextFrame()) wakeLoop();
+  requestAnimationFrame(tick);
 }
-wakeLoop();
+requestAnimationFrame(tick);
 
 // ── ZOOM / PAN ────────────────────────────────────────────────────────────────
 function clampPan() {
@@ -1833,7 +1813,6 @@ window.addEventListener('mousemove', e => {
     }
   } else {
     mouseStale = true;
-    wakeLoop();
   }
 });
 window.addEventListener('mouseup', e => {
