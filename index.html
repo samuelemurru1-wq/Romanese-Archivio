@@ -657,7 +657,7 @@ let DPR = 1, VW = 0, VH = 0, mobileNavH = 0;
 let _prevMobile = null; // null = prima chiamata
 
 function resize() {
-  DPR = window.devicePixelRatio || 1;
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
   VW  = window.innerWidth;
   VH  = window.innerHeight;
 
@@ -719,8 +719,8 @@ function resize() {
   cv.style.height = VH + 'px';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  dirty = true;
+  ctx.imageSmoothingQuality = VW < 768 ? 'medium' : 'high';
+  markDirty();
 }
 window.addEventListener('resize', resize);
 resize();
@@ -731,7 +731,7 @@ function mkBitmap(img) {
   return createImageBitmap(img).catch(() => img);
 }
 
-const CONCURRENCY = 8;
+const CONCURRENCY = window.innerWidth < 768 ? 4 : 8;
 
 function processQueue() {
   while (inFlight < CONCURRENCY && loadQueue.length > 0) {
@@ -750,7 +750,7 @@ function processQueue() {
 function onLoaded() {
   loadedCount++;
   document.getElementById('prog').style.width = (loadedCount / items.length * 100) + '%';
-  dirty = true;
+  markDirty();
   if (loadedCount === items.length && !introStarted) {
     introStarted = true;
     document.getElementById('prog').style.opacity = '0';
@@ -808,7 +808,7 @@ function startReveal() {
   function next() {
     if (i >= sorted.length) return;
     sorted[i++].visible = true;
-    dirty = true;
+    markDirty();
     setTimeout(next, 28); // ~6s totali per tutti i 207
   }
   next();
@@ -882,7 +882,7 @@ function renderSphere(masterAlpha = 1) {
       it.fullLoading = true; sphInFlight++;
       const img = new Image();
       img.onload = () => {
-        mkBitmap(img).then(bm => { it.fullBm = bm; it.fullLoading = false; sphInFlight--; dirty = true; });
+        mkBitmap(img).then(bm => { it.fullBm = bm; it.fullLoading = false; sphInFlight--; markDirty(); });
       };
       img.onerror = () => { it.fullLoading = false; sphInFlight--; };
       img.src = it.url;
@@ -1103,12 +1103,12 @@ function render() {
     const a = it.alpha * fog * it.fa;
     if (a < 0.03) continue;
 
-    // LOD mappa (non durante transizione verso sfera)
-    if (sphereT < 0.1 && Math.max(iw, ih) > 100 && !it.fullBm && !it.fullLoading) {
+    // LOD mappa (non su mobile, non durante transizione verso sfera)
+    if (VW >= 768 && sphereT < 0.1 && Math.max(iw, ih) > 100 && !it.fullBm && !it.fullLoading) {
       it.fullLoading = true;
       const img = new Image();
       img.onload = () => {
-        mkBitmap(img).then(bm => { it.fullBm = bm; it.fullLoading = false; dirty = true; });
+        mkBitmap(img).then(bm => { it.fullBm = bm; it.fullLoading = false; markDirty(); });
       };
       img.onerror = () => { it.fullLoading = false; };
       img.src = it.url;
@@ -1147,7 +1147,7 @@ function startIntro() {
     it.fullLoading = true;
     const img = new Image();
     img.onload = () => {
-      mkBitmap(img).then(bm => { it.fullBm = bm; it.fullLoading = false; dirty = true; });
+      mkBitmap(img).then(bm => { it.fullBm = bm; it.fullLoading = false; markDirty(); });
     };
     img.onerror = () => { it.fullLoading = false; };
     img.src = it.url;
@@ -1203,7 +1203,28 @@ function renderIntro() {
   }
 }
 
+let rafId = null;
+function wakeLoop() { if (!rafId) rafId = requestAnimationFrame(tick); }
+function markDirty() { dirty = true; wakeLoop(); }
+function needsNextFrame() {
+  if (introPhase > 0) return true;
+  if (Math.abs(sphereT - sphereTarget) > 0.001) return true;
+  if (Math.abs(grigliaT - grigliaTarget) > 0.001) return true;
+  if (Math.abs(modeT - modeTarget) > 0.001) return true;
+  if (!drg && (Math.abs(vx) > 0.3 || Math.abs(vy) > 0.3)) return true;
+  if (sphereMode) return true;
+  if (!sphereMode && Math.abs(sc - canvasZoomTarget) > 0.0001) return true;
+  if (dirty) return true;
+  for (const it of items) {
+    if (it.visible && it.alpha < 1) return true;
+    const tfa = hiddenCats.size === 0 || !hiddenCats.has(it.cat) ? 1 : 0;
+    if (Math.abs(it.fa - tfa) > 0.004) return true;
+  }
+  return false;
+}
+
 function tick() {
+  rafId = null;
   // ── intro animation ──────────────────────────────────────────────────────────
   if (introPhase > 0) {
     if (introPhase === 1) {
@@ -1220,36 +1241,36 @@ function tick() {
       if (introScatterT >= 1) {
         introPhase = 0;
         items.forEach(it => { it.visible = true; it.alpha = 1; });
-        dirty = true;
+        markDirty();
       }
     }
     renderIntro();
-    requestAnimationFrame(tick);
+    rafId = requestAnimationFrame(tick);
     return;
   }
 
   // transizione verso/da sfera e griglia
   if (Math.abs(sphereTarget - sphereT) > 0.001) {
     sphereT += (sphereTarget - sphereT) * 0.10;
-    dirty = true;
+    markDirty();
   }
   if (Math.abs(grigliaTarget - grigliaT) > 0.001) {
     grigliaT += (grigliaTarget - grigliaT) * 0.10;
-    dirty = true;
+    markDirty();
   }
   // animazione transizione modalità
   if (Math.abs(modeT - modeTarget) > 0.001) {
     modeT += (modeTarget - modeT) * 0.055;
     centX = centX0 + (centX1 - centX0) * modeT;
     centY = centY0 + (centY1 - centY0) * modeT;
-    dirty = true;
+    markDirty();
   }
   // fade-in miniature + lerp filtro categorie
   for (let i = 0; i < items.length; i++) {
     const it = items[i];
-    if (it.visible && it.alpha < 1) { it.alpha = Math.min(1, it.alpha + 0.055); dirty = true; }
+    if (it.visible && it.alpha < 1) { it.alpha = Math.min(1, it.alpha + 0.055); markDirty(); }
     const tfa = hiddenCats.size === 0 || !hiddenCats.has(it.cat) ? 1 : 0;
-    if (Math.abs(it.fa - tfa) > 0.004) { it.fa += (tfa - it.fa) * 0.12; dirty = true; }
+    if (Math.abs(it.fa - tfa) > 0.004) { it.fa += (tfa - it.fa) * 0.12; markDirty(); }
     else it.fa = tfa;
   }
   // inertia pan — decelerazione fluida dopo il drag
@@ -1260,7 +1281,7 @@ function tick() {
     if (tx !== txPre) vx = 0;
     if (ty !== tyPre) vy = 0;
     vx *= 0.88; vy *= 0.88;
-    dirty = true;
+    markDirty();
   }
   // ritorno fluido al centro quando si è al floor zoom
   {
@@ -1271,7 +1292,7 @@ function tick() {
       const dx = tgtTx - tx, dy = tgtTy - ty;
       if (Math.abs(dx) > 0.2 || Math.abs(dy) > 0.2) {
         tx += dx * 0.07; ty += dy * 0.07;
-        dirty = true;
+        markDirty();
       }
     }
   }
@@ -1280,17 +1301,17 @@ function tick() {
     if (!drg && (Math.abs(sphRotVX) > 0.0002 || Math.abs(sphRotVY) > 0.0002)) {
       sphRotX += sphRotVX; sphRotY += sphRotVY;
       sphRotVX *= 0.91; sphRotVY *= 0.91;
-      dirty = true;
+      markDirty();
     }
     if (!drg && Math.abs(sphRotVY) < 0.001) {
       sphRotY += 0.0008;
-      dirty = true;
+      markDirty();
     }
     if (Math.abs(sphZoomTarget - sphZoom) > 0.001) {
       sphZoom += (sphZoomTarget - sphZoom) * 0.14;
       zt.textContent = Math.round((sphZoom - 0.8) * 100) + '%';
       sphZoomStable = 0;
-      dirty = true;
+      markDirty();
     } else {
       sphZoomStable++;
     }
@@ -1316,18 +1337,18 @@ function tick() {
       sc = scNew;
       clampPan();
       zt.textContent = Math.round((sc - SC_MIN) * 100) + '%';
-      dirty = true;
+      markDirty();
     }
   }
   if (mouseStale && !drg) {
     mouseStale = false;
     const anyPanelOpen = ['about','lv','gv'].some(id => document.getElementById(id).classList.contains('open'));
     if (anyPanelOpen) {
-      if (hover) { hover = null; cv.className = ''; dirty = true; }
+      if (hover) { hover = null; cv.className = ''; markDirty(); }
       tip.style.display = 'none';
     } else {
       const h = sphereMode ? hitAtSphere(mouseX, mouseY) : hitAt(mouseX, mouseY);
-      if (h !== hover) { hover = h; cv.className = h ? 'ptr' : ''; dirty = true; }
+      if (h !== hover) { hover = h; cv.className = h ? 'ptr' : ''; markDirty(); }
       if (h) {
         tip.textContent = h.title + (h.year ? '  ·  ' + h.year : '');
         tip.style.display = 'block';
@@ -1339,9 +1360,9 @@ function tick() {
     }
   }
   if (dirty) { render(); dirty = false; }
-  requestAnimationFrame(tick);
+  if (needsNextFrame()) rafId = requestAnimationFrame(tick);
 }
-requestAnimationFrame(tick);
+wakeLoop();
 
 // ── ZOOM / PAN ────────────────────────────────────────────────────────────────
 function clampPan() {
@@ -1392,7 +1413,7 @@ function setZoom(f, cx, cy) {
   canvasZoomTarget = sc;
   vx = 0; vy = 0;
   zt.textContent = Math.round((sc - SC_MIN) * 100) + '%';
-  dirty = true;
+  markDirty();
 }
 
 function fitAll() {
@@ -1427,7 +1448,7 @@ function fitAll() {
   // posizione centrata a floor zoom (sc=SC_MIN, sp=1) — usata dal smooth return
   floorTx = (VW - cw * SC_MIN) / 2 - x0 * SC_MIN;
   floorTy = (VH - mobileNavH - ch * SC_MIN) / 2 - y0 * SC_MIN;
-  dirty = true;
+  markDirty();
 }
 
 cv.addEventListener('wheel', e => {
@@ -1435,14 +1456,14 @@ cv.addEventListener('wheel', e => {
   const delta = e.deltaMode === 1 ? e.deltaY * 30 : e.deltaY;
   if (sphereMode) {
     sphZoomTarget = Math.max(0.8, Math.min(5, sphZoomTarget * Math.pow(1.001, -delta)));
-    dirty = true;
+    markDirty();
     return;
   }
   const f = Math.pow(1.001, -delta);
   const scFloor = modeTarget === 1 ? mode1InitSc : SC_MIN;
   canvasZoomTarget = Math.max(scFloor, Math.min(3, canvasZoomTarget * f));
   canvasPivotX = e.clientX; canvasPivotY = e.clientY;
-  dirty = true;
+  markDirty();
 }, { passive: false });
 const mobileNavMap = { bmappa:'mb-mappa', bgriglia:'mb-griglia' };
 const viewDesc = {
@@ -1477,7 +1498,7 @@ function goMappa() {
   vx = 0; vy = 0;
   setActiveMode('bmappa');
   zt.textContent = Math.round((sc - SC_MIN) * 100) + '%';
-  dirty = true;
+  markDirty();
 }
 
 function goProfondita() {
@@ -1489,7 +1510,7 @@ function goProfondita() {
   vx = 0; vy = 0;
   setActiveMode('bprofondita');
   zt.textContent = Math.round((sc - SC_MIN) * 100) + '%';
-  dirty = true;
+  markDirty();
 }
 
 function goSfera() {
@@ -1501,7 +1522,7 @@ function goSfera() {
   setActiveMode('bsfera');
   hover = null; tip.style.display = 'none';
   sphRotVX = 0; sphRotVY = 0;
-  dirty = true;
+  markDirty();
 }
 
 // ── MOBILE: MAPPA ORIZZONTALE (Anno) ──────────────────────────────────────
@@ -1566,7 +1587,7 @@ function goMobCrono() {
   document.getElementById('gv').classList.remove('open');
   document.getElementById('lv').classList.remove('open');
   document.getElementById('about').classList.remove('open');
-  sphereMode = false; sphereTarget = 0; dirty = true;
+  sphereMode = false; sphereTarget = 0; markDirty();
   setActiveMode('bmappa');
   if (items.length) buildCronoView();
   // fallback: forza caricamento immagini visibili se observer non ha sparato
@@ -1612,7 +1633,7 @@ function goMobColori() {
   document.getElementById('gv').classList.remove('open');
   document.getElementById('lv').classList.remove('open');
   document.getElementById('about').classList.remove('open');
-  sphereMode = false; sphereTarget = 0; dirty = true;
+  sphereMode = false; sphereTarget = 0; markDirty();
   setActiveMode('bprofondita');
   if (items.length) buildColoriView();
   setTimeout(() => {
@@ -1660,7 +1681,7 @@ function goGriglia() {
   if (gv.classList.contains('open')) { gv.classList.remove('open'); setActiveMode(null); return; }
   document.getElementById('lv').classList.remove('open');
   sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
-  dirty = true;
+  markDirty();
   gv.classList.add('open');
   setActiveMode('bgriglia');
   if (items.length) buildGridView();
@@ -1690,14 +1711,14 @@ document.querySelectorAll('.fp-cat').forEach(btn => {
       hiddenCats.add(cat);
       btn.classList.remove('vis');
     }
-    dirty = true;
+    markDirty();
   };
 });
 document.getElementById('fp-all').onclick = e => {
   e.stopPropagation();
   hiddenCats.clear();
   document.querySelectorAll('.fp-cat').forEach(b => b.classList.add('vis'));
-  dirty = true;
+  markDirty();
 };
 document.addEventListener('click', () => fpanel.classList.remove('open'));
 
@@ -1706,12 +1727,12 @@ document.getElementById('bdark').onclick = e => {
   e.stopPropagation();
   const nowDark = document.documentElement.classList.toggle('dark');
   localStorage.setItem('romanese-theme', nowDark ? 'dark' : 'light');
-  dirty = true;
+  markDirty();
 };
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
   if (!localStorage.getItem('romanese-theme')) {
     document.documentElement.classList.toggle('dark', e.matches);
-    dirty = true;
+    markDirty();
   }
 });
 
@@ -1794,12 +1815,12 @@ window.addEventListener('mousemove', e => {
         sphRotVX = (e.clientY - lastPY) / dt * 0.05;
       }
       lastPX = e.clientX; lastPY = e.clientY; lastPT = now;
-      dirty = true;
+      markDirty();
     } else {
       const dx = e.clientX - x0, dy = e.clientY - y0;
       if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
         moved = true; tx = tx0 + dx; ty = ty0 + dy;
-        dirty = true;
+        markDirty();
         tip.style.display = 'none';
         const now = performance.now(), dt = now - lastPT;
         if (dt > 0 && dt < 80) {
@@ -1811,6 +1832,7 @@ window.addEventListener('mousemove', e => {
     }
   } else {
     mouseStale = true;
+    wakeLoop();
   }
 });
 window.addEventListener('mouseup', e => {
@@ -1823,7 +1845,7 @@ window.addEventListener('mouseup', e => {
 });
 cv.addEventListener('mouseleave', () => {
   tip.style.display = 'none';
-  if (hover) { hover = null; dirty = true; }
+  if (hover) { hover = null; markDirty(); }
 });
 
 // ── TOUCH ─────────────────────────────────────────────────────────────────────
@@ -1854,11 +1876,11 @@ cv.addEventListener('touchmove', e => {
         sphRotVX = (e.touches[0].clientY - lastPY) / dt * 0.05;
       }
       lastPX = e.touches[0].clientX; lastPY = e.touches[0].clientY; lastPT = now;
-      dirty = true;
+      markDirty();
     } else {
       const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
       if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
-        moved = true; tx = tx0 + dx; ty = ty0 + dy; clampPan(); dirty = true;
+        moved = true; tx = tx0 + dx; ty = ty0 + dy; clampPan(); markDirty();
         const now = performance.now(), dt = now - lastPT;
         if (dt > 0 && dt < 80) {
           vx = (e.touches[0].clientX - lastPX) / dt * 14;
@@ -1873,7 +1895,7 @@ cv.addEventListener('touchmove', e => {
     const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
     if (sphereMode) {
       sphZoomTarget = Math.max(0.8, Math.min(5, sphZoomTarget * d / pd));
-      dirty = true;
+      markDirty();
     } else {
       setZoom(d / pd, cx, cy);
     }
@@ -2115,7 +2137,7 @@ function goLista() {
   if (lv.classList.contains('open')) { lv.classList.remove('open'); setActiveMode(null); return; }
   document.getElementById('gv').classList.remove('open');
   sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
-  dirty = true;
+  markDirty();
   lv.classList.add('open');
   setActiveMode('blist');
   if (items.length) buildListView();
