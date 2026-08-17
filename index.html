@@ -551,7 +551,7 @@ function extractPosYear(p, seed) {
 const getCat   = p => p.split('/')[0];
 const getTitle = p => p.split('/').pop().replace(/\.[^.]+$/, '').replace(/^\[[\d\s:/]+\]\s*/, '').replace(/_+/g, ' ').trim();
 const imgUrl   = p => 'img/' + p.split('/').map(encodeURIComponent).join('/');
-const thumbUrl = p => imgUrl(p) + '?t=1';
+const thumbUrl = p => 'thumbs/' + (window._thumbHashes && window._thumbHashes[p] ? window._thumbHashes[p] : 'x') + '.jpg';
 function getSize(c, t) {
   const u = t.toUpperCase();
   if (u.includes('COPERTINA') || u.includes('COVER')) return 220;
@@ -568,8 +568,6 @@ let SC_MIN = 0.10;
 const FOCAL  = 1800;
 const catOrder = ['DOCUMENTI','FOTO POLAROID','FOTO SPARSE','LIBRETTI','MAGLIE','OGGETTI','PORTAFOTO'];
 const GRID_ROW_H = (CH - 2 * PY) / catOrder.length;
-const SPHERE_CAM_MUL = 4.5; // distanza camera = N × raggio sfera
-const SPHERE_ITEM_F  = 0.09; // dimensione foto = frazione del raggio sfera
 
 // Lerp posizione e wz in base alla modalità corrente
 function getMx(it) { return it.mx  + (it.mx1  - it.mx)  * modeT; }
@@ -629,13 +627,7 @@ let drg = false, moved = false, x0 = 0, y0 = 0, tx0 = 0, ty0 = 0;
 let lastPX = 0, lastPY = 0, lastPT = 0;
 let pd = null;
 let inFlight = 0, loadQueue = [];
-let sphInFlight = 0;
-let sphereMode = false;
-let sphereT = 0, sphereTarget = 0;
-let grigliaT = 0, grigliaTarget = 0; // 0 = mappa/profondità, 1 = sfera — lerp
-let sphRotX = 0.3, sphRotY = 0;
-let sphRotVX = 0, sphRotVY = 0;
-let sphZoom = 1, sphZoomTarget = 1, sphZoomStable = 0;
+let grigliaT = 0, grigliaTarget = 0;
 let canvasZoomTarget = SC_MIN, canvasPivotX = 0, canvasPivotY = 0;
 
 // ── INTRO ─────────────────────────────────────────────────────────────────────
@@ -646,7 +638,6 @@ const INTRO_FLASH_SIZE = 240;   // px max-side durante il flash
 const INTRO_FLASH_COUNT = 12;   // quante immagini lampeggiare
 const INTRO_FLASH_HOLD = 5;     // frame per immagine (~83ms a 60fps) → 1s flash
 const INTRO_SCATTER_SPD = 0.018; // velocità scatter (~56 frame = 0.9s)
-let sphRotX0 = 0, sphRotY0 = 0;
 
 // ── CANVAS ────────────────────────────────────────────────────────────────────
 const cv  = document.getElementById('c');
@@ -706,7 +697,7 @@ function resize() {
     fitAll();
     sc = fitSc; tx = fitTx; ty = fitTy;
     canvasZoomTarget = sc; vx = 0; vy = 0;
-    modeTarget = 0; sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
+    modeTarget = 0; grigliaTarget = 0;
     setActiveMode('bmappa');
     // Chiudi pannelli HTML che appartengono solo al portrait mobile
     if (!nowMobile) document.getElementById('mob-crono').classList.remove('open');
@@ -749,195 +740,19 @@ function processQueue() {
 
 function onLoaded() {
   loadedCount++;
-  document.getElementById('prog').style.width = (loadedCount / items.length * 100) + '%';
   dirty = true;
-  if (loadedCount === items.length && !introStarted) {
-    introStarted = true;
-    document.getElementById('prog').style.opacity = '0';
-    const ov = document.getElementById('ov');
-    ov.style.opacity = '0';
-    setTimeout(() => { ov.style.display = 'none'; startIntro(); }, 300);
-  }
-}
-
-// ── SEPARAZIONE — evita sovrapposizioni ──────────────────────────────────────
-function separateItems() {
-  const GAP = 22; // world units di margine tra item
-  for (let iter = 0; iter < 150; iter++) {
-    let anyMoved = false;
-    for (let i = 0; i < items.length; i++) {
-      for (let j = i + 1; j < items.length; j++) {
-        const a = items[i], b = items[j];
-        const minD = (a.s + b.s) * 0.5 + GAP;
-        const dx = b.mx - a.mx, dy = b.my - a.my;
-        const d2 = dx * dx + dy * dy;
-        if (d2 >= minD * minD) continue;
-        const d    = Math.sqrt(d2) || 0.1;
-        const push = (minD - d) * 0.55;
-        const nx = dx / d, ny = dy / d;
-        a.mx -= nx * push * 0.5;
-        a.my -= ny * push;
-        b.mx += nx * push * 0.5;
-        b.my += ny * push;
-        anyMoved = true;
-      }
-    }
-    for (let i = 0; i < items.length; i++) {
-      const it = items[i];
-      it.mx = Math.max(PX * 0.4, Math.min(CW - PX * 0.4, it.mx));
-      it.my = Math.max(PY * 0.4, Math.min(CH - PY * 0.4, it.my));
-    }
-    if (!anyMoved) break;
-  }
-  // riscrive jx/jy in modo che itemPos() al livello di zoom minimo usi posizioni risolte
-  for (const it of items) {
-    it.jx = it.mx - it.bx;
-    it.jy = it.my - it.by;
-  }
-}
-
-// ── REVEAL SEQUENZIALE ────────────────────────────────────────────────────────
-function startReveal() {
-  const sorted = [...items].sort((a, b) => {
-    if (!a.year && !b.year) return 0;
-    if (!a.year) return 1;
-    if (!b.year) return -1;
-    return a.year - b.year || a.my - b.my;
-  });
-  let i = 0;
-  function next() {
-    if (i >= sorted.length) return;
-    sorted[i++].visible = true;
-    dirty = true;
-    setTimeout(next, 28); // ~6s totali per tutti i 207
-  }
-  next();
-}
-
-// ── RENDER SFERA ──────────────────────────────────────────────────────────────
-function renderSphere(masterAlpha = 1) {
-  const dk = isDark();
-  ctx.globalAlpha = masterAlpha;
-  ctx.fillStyle = dk ? '#111110' : '#f5f5f3';
-  ctx.fillRect(0, 0, VW, VH);
-  ctx.globalAlpha = 1;
-
-  const R = Math.min(VW, VH) * 0.44 * sphZoom;
-  const CAM = R * SPHERE_CAM_MUL;
-  const cosX = Math.cos(sphRotX), sinX = Math.sin(sphRotX);
-  const cosY = Math.cos(sphRotY), sinY = Math.sin(sphRotY);
-
-  const proj = [];
-  for (const it of items) {
-    if (!it.visible) continue;
-    const x1 = it.spX * cosY + it.spZ * sinY;
-    const z1 = -it.spX * sinY + it.spZ * cosY;
-    const y2 = it.spY * cosX - z1 * sinX;
-    const z2 = it.spY * sinX + z1 * cosX;
-    const depth = CAM / (CAM + z2 * R);
-    const sx = VW / 2 + x1 * R * depth;
-    const sy = (VH - mobileNavH) / 2 + y2 * R * depth;
-    const { sw, sh } = itemDims(it);
-    const f = SPHERE_ITEM_F * R * depth;
-    const iw = sw * f / it.s | 0;
-    const ih = sh * f / it.s | 0;
-    proj.push({ it, sx, sy, z2, depth, iw, ih });
-  }
-  proj.sort((a, b) => b.z2 - a.z2);
-
-  // linee cronologiche tra le miniature (ordine anno)
-  {
-    const chrono = proj.slice().sort((a, b) => (a.it.year || 9999) - (b.it.year || 9999));
-    ctx.save();
-    ctx.strokeStyle = dk ? 'rgba(255,255,255,0.11)' : 'rgba(0,0,0,0.13)';
-    ctx.lineWidth = 0.5;
-    ctx.globalAlpha = 0.6 * masterAlpha;
-    ctx.beginPath();
-    let first = true;
-    for (const p of chrono) {
-      if (p.it.alpha < 0.05) continue;
-      if (first) { ctx.moveTo(p.sx, p.sy); first = false; }
-      else ctx.lineTo(p.sx, p.sy);
-    }
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-
-  let hov = null;
-  for (const p of proj) {
-    const { it, sx, sy, z2, depth, iw, ih } = p;
-    if (iw < 1 || ih < 1) continue;
-    const fog = z2 > 0 ? Math.max(0.1, 1 - z2 * 0.85) : 1.0;
-    const a = it.alpha * fog * masterAlpha;
-    if (a < 0.04) continue;
-    // cull fuori schermo
-    if (sx + iw / 2 < 0 || sx - iw / 2 > VW || sy + ih / 2 < 0 || sy - ih / 2 > VH) continue;
-
-    // LOD: carica full-res solo quando zoom è fermo e foto abbastanza grande (max 6 in parallelo)
-    if (Math.max(iw, ih) > 100 && !it.fullBm && !it.fullLoading && sphInFlight < 2
-        && sphZoomStable > 30) {
-      it.fullLoading = true; sphInFlight++;
-      const img = new Image();
-      img.onload = () => {
-        mkBitmap(img).then(bm => { it.fullBm = bm; it.fullLoading = false; sphInFlight--; dirty = true; });
-      };
-      img.onerror = () => { it.fullLoading = false; sphInFlight--; };
-      img.src = it.url;
-    }
-
-    ctx.globalAlpha = a;
-    const bm = (Math.max(iw, ih) > 100 && it.fullBm) ? it.fullBm : it.bm;
-    if (bm) {
-      ctx.drawImage(bm, sx - iw / 2 | 0, sy - ih / 2 | 0, iw, ih);
-    } else {
-      ctx.fillStyle = it.hex || (dk ? '#2e2e2c' : '#d4d4d0');
-      ctx.fillRect(sx - iw / 2 | 0, sy - ih / 2 | 0, iw, ih);
-    }
-    ctx.globalAlpha = 1;
-    if (it === hover) hov = { sx, sy, iw, ih };
-  }
-
-  if (hov) {
-    ctx.strokeStyle = dk ? '#e8e6e3' : '#111';
-    ctx.lineWidth = Math.max(1.5, 3 * Math.min(sphZoom, 1));
-    ctx.strokeRect(hov.sx - hov.iw / 2 + 0.5 | 0, hov.sy - hov.ih / 2 + 0.5 | 0, hov.iw - 1, hov.ih - 1);
-  }
-}
-
-// proiezione sfera: restituisce posizione schermo + z2 per il fog/sort
-function projectSphere(it) {
-  const R   = Math.min(VW, VH) * 0.42 * sphZoom;
-  const CAM = R * SPHERE_CAM_MUL;
-  const cosX = Math.cos(sphRotX), sinX = Math.sin(sphRotX);
-  const cosY = Math.cos(sphRotY), sinY = Math.sin(sphRotY);
-  const x1 = it.spX * cosY + it.spZ * sinY;
-  const z1 = -it.spX * sinY + it.spZ * cosY;
-  const y2 = it.spY * cosX - z1 * sinX;
-  const z2 = it.spY * sinX + z1 * cosX;
-  const depth = CAM / (CAM + z2 * R);
-  it.sphZ2 = z2;
-  return { sx: VW / 2 + x1 * R * depth, sy: (VH - mobileNavH) / 2 + y2 * R * depth, depth, z2 };
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function render() {
   const dk = isDark();
 
-  // fast path: sfera completa
-  if (sphereT > 0.998 && sphereTarget === 1) { renderSphere(1); return; }
-
   ctx.fillStyle = dk ? '#111110' : '#f5f5f3';
   ctx.fillRect(0, 0, VW, VH);
 
-  const mapAlpha = 1 - sphereT; // elementi solo-mappa sfumano uscendo
-
   // griglie anni verticali (solo desktop — su mobile anno è sull'asse Y)
-  if (mapAlpha > 0.01 && VW >= 768) {
+  if (VW >= 768) {
     ctx.save();
-    ctx.globalAlpha = mapAlpha;
     ctx.strokeStyle = dk ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
     ctx.lineWidth = 1;
     for (let y = 1960; y <= 2000; y += 5) {
@@ -958,9 +773,8 @@ function render() {
   }
 
   // barra date fissa in basso (solo desktop)
-  if (mapAlpha > 0.01 && VW >= 768) {
+  if (VW >= 768) {
     ctx.save();
-    ctx.globalAlpha = mapAlpha;
     ctx.font = '600 11px \'NHG\',\'Helvetica Neue\',Arial';
     ctx.textBaseline = 'bottom';
     ctx.textAlign = 'center';
@@ -1011,26 +825,7 @@ function render() {
     ctx.restore();
   }
 
-  // ── precomputa posizioni sfera UNA VOLTA per frame (cos/sin condivisi) ────────
-  const R_sph = Math.min(VW, VH) * 0.42 * sphZoom;
-  if (sphereT > 0.005) {
-    const CAM_s = R_sph * SPHERE_CAM_MUL;
-    const cosX_s = Math.cos(sphRotX), sinX_s = Math.sin(sphRotX);
-    const cosY_s = Math.cos(sphRotY), sinY_s = Math.sin(sphRotY);
-    for (const it of items) {
-      const x1 = it.spX * cosY_s + it.spZ * sinY_s;
-      const z1 = -it.spX * sinY_s + it.spZ * cosY_s;
-      const y2 = it.spY * cosX_s - z1 * sinX_s;
-      const z2 = it.spY * sinX_s + z1 * cosX_s;
-      const d  = CAM_s / (CAM_s + z2 * R_sph);
-      it._spSx = VW / 2 + x1 * R_sph * d;
-      it._spSy = (VH - mobileNavH) / 2 + y2 * R_sph * d;
-      it._spDp = d;
-      it.sphZ2 = z2;
-    }
-  }
-
-  // ── raccoglie item con posizione lerp mappa↔sfera ────────────────────────────
+  // ── raccoglie item con posizione lerp mappa↔griglia ──────────────────────────
   const proj = [];
   for (let i = 0; i < items.length; i++) {
     const it = items[i];
@@ -1038,21 +833,12 @@ function render() {
     const { sw, sh } = itemDims(it);
     let sx, sy, iw, ih, sortZ;
 
-    if (sphereT < 0.005 && grigliaT < 0.005) {
+    if (grigliaT < 0.005) {
       const p = project(it);
       sx = p.sx; sy = p.sy;
       iw = sw * sc * p.depth | 0;
       ih = sh * sc * p.depth | 0;
       sortZ = getWz(it);
-    } else if (sphereT >= grigliaT) {
-      const p0 = project(it);
-      const t   = sphereT;
-      sx = p0.sx + (it._spSx - p0.sx) * t;
-      sy = p0.sy + (it._spSy - p0.sy) * t;
-      const sphF = SPHERE_ITEM_F * R_sph * it._spDp;
-      iw = (sw * sc * p0.depth + (sw * sphF / it.s - sw * sc * p0.depth) * t) | 0;
-      ih = (sh * sc * p0.depth + (sh * sphF / it.s - sh * sc * p0.depth) * t) | 0;
-      sortZ = getWz(it) * (1 - t) + it.sphZ2 * 1000 * t;
     } else {
       // transizione verso griglia
       const p0 = project(it);
@@ -1091,20 +877,16 @@ function render() {
   }
 
   // ── disegna item ─────────────────────────────────────────────────────────────
-  if (sphereT > 0.005) { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; }
   let hov = null;
   for (const p of proj) {
     const { it, sx, sy, iw, ih, ix, iy } = p;
     if (iw < 1 || ih < 1 || ix + iw < 0 || ix > VW || iy + ih < 0 || iy > VH) continue;
 
-    // fog sfera: back-hemisphere sfuma durante e dopo la transizione
-    const sphFog = (it.sphZ2 || 0) > 0 ? Math.max(0.08, 1 - (it.sphZ2 || 0) * 0.85) : 1;
-    const fog = 1 + (sphFog - 1) * sphereT;
-    const a = it.alpha * fog * it.fa;
+    const a = it.alpha * it.fa;
     if (a < 0.03) continue;
 
-    // LOD mappa (non durante transizione verso sfera)
-    if (VW >= 768 && sphereT < 0.1 && Math.max(iw, ih) > 100 && !it.fullBm && !it.fullLoading) {
+    // LOD mappa: carica full-res quando foto abbastanza grande
+    if (VW >= 768 && Math.max(iw, ih) > 100 && !it.fullBm && !it.fullLoading) {
       it.fullLoading = true;
       const img = new Image();
       img.onload = () => {
@@ -1228,11 +1010,7 @@ function tick() {
     return;
   }
 
-  // transizione verso/da sfera e griglia
-  if (Math.abs(sphereTarget - sphereT) > 0.001) {
-    sphereT += (sphereTarget - sphereT) * 0.10;
-    dirty = true;
-  }
+  // transizione verso griglia
   if (Math.abs(grigliaTarget - grigliaT) > 0.001) {
     grigliaT += (grigliaTarget - grigliaT) * 0.10;
     dirty = true;
@@ -1275,27 +1053,7 @@ function tick() {
       }
     }
   }
-  // inertia rotazione sfera + auto-rotazione in idle + lerp zoom
-  if (sphereMode) {
-    if (!drg && (Math.abs(sphRotVX) > 0.0002 || Math.abs(sphRotVY) > 0.0002)) {
-      sphRotX += sphRotVX; sphRotY += sphRotVY;
-      sphRotVX *= 0.91; sphRotVY *= 0.91;
-      dirty = true;
-    }
-    if (!drg && Math.abs(sphRotVY) < 0.001) {
-      sphRotY += 0.0008;
-      dirty = true;
-    }
-    if (Math.abs(sphZoomTarget - sphZoom) > 0.001) {
-      sphZoom += (sphZoomTarget - sphZoom) * 0.14;
-      zt.textContent = Math.round((sphZoom - 0.8) * 100) + '%';
-      sphZoomStable = 0;
-      dirty = true;
-    } else {
-      sphZoomStable++;
-    }
-  }
-  if (!sphereMode && sc !== canvasZoomTarget) {
+  if (sc !== canvasZoomTarget) {
     const scFloor = modeTarget === 1 ? mode1InitSc : SC_MIN;
     const logDiff = Math.log(canvasZoomTarget / sc);
     const scNew = Math.abs(logDiff) > 0.0001
@@ -1326,7 +1084,7 @@ function tick() {
       if (hover) { hover = null; cv.className = ''; dirty = true; }
       tip.style.display = 'none';
     } else {
-      const h = sphereMode ? hitAtSphere(mouseX, mouseY) : hitAt(mouseX, mouseY);
+      const h = hitAt(mouseX, mouseY);
       if (h !== hover) { hover = h; cv.className = h ? 'ptr' : ''; dirty = true; }
       if (h) {
         tip.textContent = h.title + (h.year ? '  ·  ' + h.year : '');
@@ -1433,11 +1191,6 @@ function fitAll() {
 cv.addEventListener('wheel', e => {
   e.preventDefault();
   const delta = e.deltaMode === 1 ? e.deltaY * 30 : e.deltaY;
-  if (sphereMode) {
-    sphZoomTarget = Math.max(0.8, Math.min(5, sphZoomTarget * Math.pow(1.001, -delta)));
-    dirty = true;
-    return;
-  }
   const f = Math.pow(1.001, -delta);
   const scFloor = modeTarget === 1 ? mode1InitSc : SC_MIN;
   canvasZoomTarget = Math.max(scFloor, Math.min(3, canvasZoomTarget * f));
@@ -1470,37 +1223,13 @@ function closeList() {
 
 function goMappa() {
   closeList();
-  sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
+  grigliaTarget = 0;
   modeTarget = 0;
   sc = fitSc; tx = fitTx; ty = fitTy;
   canvasZoomTarget = sc; canvasPivotX = VW / 2; canvasPivotY = (VH - mobileNavH) / 2;
   vx = 0; vy = 0;
   setActiveMode('bmappa');
   zt.textContent = Math.round((sc - SC_MIN) * 100) + '%';
-  dirty = true;
-}
-
-function goProfondita() {
-  closeList();
-  sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
-  modeTarget = 1;
-  sc = mode1InitSc; tx = mode1InitTx; ty = mode1InitTy;
-  canvasZoomTarget = sc; canvasPivotX = VW / 2; canvasPivotY = (VH - mobileNavH) / 2;
-  vx = 0; vy = 0;
-  setActiveMode('bprofondita');
-  zt.textContent = Math.round((sc - SC_MIN) * 100) + '%';
-  dirty = true;
-}
-
-function goSfera() {
-  if (sphereTarget === 1) return;
-  closeList();
-  grigliaTarget = 0;
-  sphereMode = true; sphereTarget = 1;
-  sphZoom = 1; sphZoomTarget = 1;
-  setActiveMode('bsfera');
-  hover = null; tip.style.display = 'none';
-  sphRotVX = 0; sphRotVY = 0;
   dirty = true;
 }
 
@@ -1566,17 +1295,9 @@ function goMobCrono() {
   document.getElementById('gv').classList.remove('open');
   document.getElementById('lv').classList.remove('open');
   document.getElementById('about').classList.remove('open');
-  sphereMode = false; sphereTarget = 0; dirty = true;
+  dirty = true;
   setActiveMode('bmappa');
   if (items.length) buildCronoView();
-  // fallback: forza caricamento immagini visibili se observer non ha sparato
-  setTimeout(() => {
-    document.getElementById('mob-crono-inner').querySelectorAll('img[data-src]').forEach(img => {
-      img.src = img.dataset.src;
-      img.onload = () => img.classList.add('vis');
-      img.removeAttribute('data-src');
-    });
-  }, 800);
 }
 
 // ── MOBILE: COLORI (Colore) ───────────────────────────────────────────────
@@ -1612,16 +1333,9 @@ function goMobColori() {
   document.getElementById('gv').classList.remove('open');
   document.getElementById('lv').classList.remove('open');
   document.getElementById('about').classList.remove('open');
-  sphereMode = false; sphereTarget = 0; dirty = true;
+  dirty = true;
   setActiveMode('bprofondita');
   if (items.length) buildColoriView();
-  setTimeout(() => {
-    document.getElementById('mob-colori-inner').querySelectorAll('img[data-src]').forEach(img => {
-      img.src = img.dataset.src;
-      img.onload = () => img.classList.add('vis');
-      img.removeAttribute('data-src');
-    });
-  }, 800);
 }
 
 function buildGridView() {
@@ -1659,7 +1373,7 @@ function goGriglia() {
   const gv = document.getElementById('gv');
   if (gv.classList.contains('open')) { gv.classList.remove('open'); setActiveMode(null); return; }
   document.getElementById('lv').classList.remove('open');
-  sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
+  grigliaTarget = 0;
   dirty = true;
   gv.classList.add('open');
   setActiveMode('bgriglia');
@@ -1743,71 +1457,28 @@ function hitAtGrid(mx, my) {
   return null;
 }
 
-function hitAtSphere(mx, my) {
-  const R = Math.min(VW, VH) * 0.42 * sphZoom;
-  const CAM = R * SPHERE_CAM_MUL;
-  const cosX = Math.cos(sphRotX), sinX = Math.sin(sphRotX);
-  const cosY = Math.cos(sphRotY), sinY = Math.sin(sphRotY);
-  let best = null, bestZ = Infinity;
-  for (const it of items) {
-    if (!it.visible) continue;
-    const x1 = it.spX * cosY + it.spZ * sinY;
-    const z1 = -it.spX * sinY + it.spZ * cosY;
-    const y2 = it.spY * cosX - z1 * sinX;
-    const z2 = it.spY * sinX + z1 * cosX;
-    if (z2 > 0.6) continue;
-    const depth = CAM / (CAM + z2 * R);
-    const sx = VW / 2 + x1 * R * depth;
-    const sy = (VH - mobileNavH) / 2 + y2 * R * depth;
-    const { sw, sh } = itemDims(it);
-    const f = SPHERE_ITEM_F * R * depth;
-    const iw = sw * f / it.s;
-    const ih = sh * f / it.s;
-    if (mx >= sx - iw / 2 && mx < sx + iw / 2 && my >= sy - ih / 2 && my < sy + ih / 2) {
-      if (z2 < bestZ) { bestZ = z2; best = it; }
-    }
-  }
-  return best;
-}
-
 // ── DRAG ─────────────────────────────────────────────────────────────────────
 cv.addEventListener('mousedown', e => {
   drg = true; moved = false;
   x0 = e.clientX; y0 = e.clientY; tx0 = tx; ty0 = ty;
-  sphRotX0 = sphRotX; sphRotY0 = sphRotY;
-  vx = 0; vy = 0; sphRotVX = 0; sphRotVY = 0;
+  vx = 0; vy = 0;
   lastPX = e.clientX; lastPY = e.clientY; lastPT = performance.now();
   cv.classList.add('drag');
 });
 window.addEventListener('mousemove', e => {
   mouseX = e.clientX; mouseY = e.clientY;
   if (drg) {
-    if (sphereMode) {
-      const dx = e.clientX - x0, dy = e.clientY - y0;
-      moved = true;
-      sphRotY = sphRotY0 + dx * 0.006;
-      sphRotX = sphRotX0 + dy * 0.006;
+    const dx = e.clientX - x0, dy = e.clientY - y0;
+    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+      moved = true; tx = tx0 + dx; ty = ty0 + dy;
+      dirty = true;
       tip.style.display = 'none';
       const now = performance.now(), dt = now - lastPT;
       if (dt > 0 && dt < 80) {
-        sphRotVY = (e.clientX - lastPX) / dt * 0.05;
-        sphRotVX = (e.clientY - lastPY) / dt * 0.05;
+        vx = (e.clientX - lastPX) / dt * 14;
+        vy = (e.clientY - lastPY) / dt * 14;
       }
       lastPX = e.clientX; lastPY = e.clientY; lastPT = now;
-      dirty = true;
-    } else {
-      const dx = e.clientX - x0, dy = e.clientY - y0;
-      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
-        moved = true; tx = tx0 + dx; ty = ty0 + dy;
-        dirty = true;
-        tip.style.display = 'none';
-        const now = performance.now(), dt = now - lastPT;
-        if (dt > 0 && dt < 80) {
-          vx = (e.clientX - lastPX) / dt * 14;
-          vy = (e.clientY - lastPY) / dt * 14;
-        }
-        lastPX = e.clientX; lastPY = e.clientY; lastPT = now;
-      }
     }
   } else {
     mouseStale = true;
@@ -1817,7 +1488,7 @@ window.addEventListener('mouseup', e => {
   if (!drg) return;
   drg = false; cv.classList.remove('drag');
   if (!moved) {
-    const h = sphereMode ? hitAtSphere(e.clientX, e.clientY) : hitAt(e.clientX, e.clientY);
+    const h = hitAt(e.clientX, e.clientY);
     if (h) openLB(h.idx, getItemScreenRect(h));
   }
 });
@@ -1832,8 +1503,7 @@ cv.addEventListener('touchstart', e => {
     drg = true; moved = false;
     x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
     tx0 = tx; ty0 = ty; pd = null;
-    sphRotX0 = sphRotX; sphRotY0 = sphRotY;
-    vx = 0; vy = 0; sphRotVX = 0; sphRotVY = 0;
+    vx = 0; vy = 0;
     lastPX = e.touches[0].clientX; lastPY = e.touches[0].clientY; lastPT = performance.now();
   } else if (e.touches.length === 2) {
     drg = false;
@@ -1843,47 +1513,28 @@ cv.addEventListener('touchstart', e => {
 cv.addEventListener('touchmove', e => {
   e.preventDefault();
   if (e.touches.length === 1 && drg) {
-    if (sphereMode) {
-      const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
-      moved = true;
-      sphRotY = sphRotY0 + dx * 0.006;
-      sphRotX = sphRotX0 + dy * 0.006;
+    const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+      moved = true; tx = tx0 + dx; ty = ty0 + dy; clampPan(); dirty = true;
       const now = performance.now(), dt = now - lastPT;
       if (dt > 0 && dt < 80) {
-        sphRotVY = (e.touches[0].clientX - lastPX) / dt * 0.05;
-        sphRotVX = (e.touches[0].clientY - lastPY) / dt * 0.05;
+        vx = (e.touches[0].clientX - lastPX) / dt * 14;
+        vy = (e.touches[0].clientY - lastPY) / dt * 14;
       }
       lastPX = e.touches[0].clientX; lastPY = e.touches[0].clientY; lastPT = now;
-      dirty = true;
-    } else {
-      const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
-      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
-        moved = true; tx = tx0 + dx; ty = ty0 + dy; clampPan(); dirty = true;
-        const now = performance.now(), dt = now - lastPT;
-        if (dt > 0 && dt < 80) {
-          vx = (e.touches[0].clientX - lastPX) / dt * 14;
-          vy = (e.touches[0].clientY - lastPY) / dt * 14;
-        }
-        lastPX = e.touches[0].clientX; lastPY = e.touches[0].clientY; lastPT = now;
-      }
     }
   } else if (e.touches.length === 2 && pd !== null) {
     const d  = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
     const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
     const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-    if (sphereMode) {
-      sphZoomTarget = Math.max(0.8, Math.min(5, sphZoomTarget * d / pd));
-      dirty = true;
-    } else {
-      setZoom(d / pd, cx, cy);
-    }
+    setZoom(d / pd, cx, cy);
     pd = d;
   }
 }, { passive: false });
 cv.addEventListener('touchend', e => {
   if (drg && !moved) {
     const t = e.changedTouches[0];
-    const h = sphereMode ? hitAtSphere(t.clientX, t.clientY) : hitAt(t.clientX, t.clientY);
+    const h = hitAt(t.clientX, t.clientY);
     if (h) openLB(h.idx, getItemScreenRect(h));
   }
   drg = false; pd = null;
@@ -1894,26 +1545,9 @@ let lbOriginRect = null;
 let lbClosing = false;
 
 function getItemScreenRect(it) {
-  if (sphereMode) {
-    const R = Math.min(VW, VH) * 0.42 * sphZoom;
-    const CAM = R * SPHERE_CAM_MUL;
-    const cosX = Math.cos(sphRotX), sinX = Math.sin(sphRotX);
-    const cosY = Math.cos(sphRotY), sinY = Math.sin(sphRotY);
-    const x1 = it.spX * cosY + it.spZ * sinY;
-    const z1 = -it.spX * sinY + it.spZ * cosY;
-    const y2 = it.spY * cosX - z1 * sinX;
-    const z2 = it.spY * sinX + z1 * cosX;
-    const depth = CAM / (CAM + z2 * R);
-    const sx = VW / 2 + x1 * R * depth;
-    const sy = (VH - mobileNavH) / 2 + y2 * R * depth;
-    const { sw, sh } = itemDims(it);
-    const f = SPHERE_ITEM_F * R * depth;
-    return { sx, sy, iw: sw * f / it.s, ih: sh * f / it.s };
-  } else {
-    const p = project(it);
-    const { sw, sh } = itemDims(it);
-    return { sx: p.sx, sy: p.sy, iw: sw * sc * p.depth, ih: sh * sc * p.depth };
-  }
+  const p = project(it);
+  const { sw, sh } = itemDims(it);
+  return { sx: p.sx, sy: p.sy, iw: sw * sc * p.depth, ih: sh * sc * p.depth };
 }
 
 function openLB(idx, originRect) {
@@ -2114,7 +1748,7 @@ function goLista() {
   const lv = document.getElementById('lv');
   if (lv.classList.contains('open')) { lv.classList.remove('open'); setActiveMode(null); return; }
   document.getElementById('gv').classList.remove('open');
-  sphereMode = false; sphereTarget = 0; grigliaTarget = 0;
+  grigliaTarget = 0;
   dirty = true;
   lv.classList.add('open');
   setActiveMode('blist');
@@ -2173,20 +1807,6 @@ async function init() {
       bm: null, fullBm: null, fullLoading: false, visible: false, alpha: 0, fa: 1,
       thumbSrc: thumbUrl(it.rel_path), url: imgUrl(it.rel_path) };
   });
-
-  // coordinate sfera — reticolo di Fibonacci per distribuzione uniforme
-  {
-    const n = items.length;
-    const golden = Math.PI * (3 - Math.sqrt(5));
-    items.forEach((it, i) => {
-      const y = 1 - (i / (n - 1)) * 2;
-      const r = Math.sqrt(Math.max(0, 1 - y * y));
-      const theta = golden * i;
-      it.spX = r * Math.cos(theta);
-      it.spY = y;
-      it.spZ = r * Math.sin(theta);
-    });
-  }
 
   // posizioni griglia: colonne=anni, righe=categorie, item ordinati dentro la cella
   {
@@ -2266,8 +1886,8 @@ async function init() {
     mode1InitTy = (VH-mobileNavH-(pry1-pry0)*mode1InitSc)/2 - pry0*mode1InitSc;
   }
 
-  // mobile: canvas Mappa verticale, senza intro animazione
   if (VW < 768) {
+    // Mobile: mostra mob-crono subito, le thumbnail le carica IntersectionObserver
     introStarted = true;
     items.forEach(it => { it.visible = true; it.alpha = 1; });
     document.getElementById('prog').style.opacity = '0';
@@ -2275,18 +1895,24 @@ async function init() {
     ov2.style.opacity = '0';
     setTimeout(() => { ov2.style.display = 'none'; goMobCrono(); }, 150);
   } else {
+    // Desktop: intro parte subito dopo il caricamento dati, thumbnail in background
     setActiveMode('bmappa');
     items.forEach(it => { it.visible = true; });
-  }
+    introStarted = true;
+    document.getElementById('prog').style.opacity = '0';
+    const ov = document.getElementById('ov');
+    ov.style.opacity = '0';
+    setTimeout(() => { ov.style.display = 'none'; startIntro(); }, 300);
 
-  // carica le thumbnail in background
-  loadQueue = [...items].sort((a, b) => {
-    if (!a.year && !b.year) return 0;
-    if (!a.year) return 1;
-    if (!b.year) return -1;
-    return a.year - b.year;
-  });
-  processQueue();
+    // carica le thumbnail in background mentre l'intro gira
+    loadQueue = [...items].sort((a, b) => {
+      if (!a.year && !b.year) return 0;
+      if (!a.year) return 1;
+      if (!b.year) return -1;
+      return a.year - b.year;
+    });
+    processQueue();
+  }
 
 }
 
