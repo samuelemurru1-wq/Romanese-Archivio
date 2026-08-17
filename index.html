@@ -1154,6 +1154,7 @@ function startIntro() {
   });
   introFlashIdx = 0; introFlashHold = 0; introScatterT = 0;
   introPhase = 1;
+  wakeLoop();
 }
 
 function renderIntro() {
@@ -1360,7 +1361,7 @@ function tick() {
     }
   }
   if (dirty) { render(); dirty = false; }
-  if (needsNextFrame()) rafId = requestAnimationFrame(tick);
+  if (needsNextFrame()) wakeLoop();
 }
 wakeLoop();
 
