@@ -1672,7 +1672,7 @@ document.getElementById('bmappa').onclick   = goMappa;
 document.getElementById('bgriglia').onclick = goGriglia;
 
 // mobile bottom nav
-document.getElementById('mb-mappa').onclick   = goMappa;
+document.getElementById('mb-mappa').onclick   = goMobCrono;
 document.getElementById('mb-griglia').onclick = goGriglia;
 
 // ── FILTRO CATEGORIE ──────────────────────────────────────────────────────────
@@ -2268,14 +2268,14 @@ async function init() {
     mode1InitTy = (VH-mobileNavH-(pry1-pry0)*mode1InitSc)/2 - pry0*mode1InitSc;
   }
 
-  // mobile: canvas Mappa verticale, senza intro animazione
+  // mobile: DOM timeline, senza canvas e senza intro
   if (VW < 768) {
     introStarted = true;
     items.forEach(it => { it.visible = true; it.alpha = 1; });
     document.getElementById('prog').style.opacity = '0';
     const ov2 = document.getElementById('ov');
     ov2.style.opacity = '0';
-    setTimeout(() => { ov2.style.display = 'none'; setActiveMode('bmappa'); }, 150);
+    setTimeout(() => { ov2.style.display = 'none'; goMobCrono(); }, 150);
   } else {
     setActiveMode('bmappa');
     items.forEach(it => { it.visible = true; });
